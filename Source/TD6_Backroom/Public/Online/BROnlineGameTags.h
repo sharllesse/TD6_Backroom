@@ -1,0 +1,17 @@
+﻿// Copyright (c) Logicraft Interactive. All Rights Reserved.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "NativeGameplayTags.h"
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Online_Callback_OnLoginComplete);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Online_Callback_OnLogoutComplete);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Online_Callback_OnLoginStatusChanged);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Online_Callback_OnCreateSessionCompleted);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Online_Callback_OnDestroySessionRequested);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Online_Callback_OnDestroySessionCompleted);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Online_Callback_OnJoinSessionCompleted);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Online_Callback_OnExternalUIChange);
