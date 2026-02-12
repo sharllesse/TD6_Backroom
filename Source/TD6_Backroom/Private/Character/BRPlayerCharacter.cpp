@@ -1,8 +1,8 @@
 // Copyright (c) Logicraft Interactive. All Rights Reserved.
 
-#include "Online/Tests/OWPlayerCharacter_OnlineTesting.h"
+#include "Character/BRPlayerCharacter.h"
 
-AOWPlayerCharacter_OnlineTesting::AOWPlayerCharacter_OnlineTesting()
+ABRPlayerCharacter::ABRPlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -13,7 +13,7 @@ AOWPlayerCharacter_OnlineTesting::AOWPlayerCharacter_OnlineTesting()
 	CameraComponent->SetupAttachment(SpringArmComponent);
 }
 
-void AOWPlayerCharacter_OnlineTesting::OnMove(const FInputActionValue& InputActionValue)
+void ABRPlayerCharacter::OnMove(const FInputActionValue& InputActionValue)
 {
 	const FVector2D MoveInput{InputActionValue.Get<FVector2D>()};
 
@@ -22,7 +22,7 @@ void AOWPlayerCharacter_OnlineTesting::OnMove(const FInputActionValue& InputActi
 	AddMovementInput(FRotationMatrix(ControlYaw).GetUnitAxis(EAxis::Y), MoveInput.X);
 }
 
-void AOWPlayerCharacter_OnlineTesting::OnJump(const FInputActionValue& InputActionValue)
+void ABRPlayerCharacter::OnJump(const FInputActionValue& InputActionValue)
 {
 	Jump();
 }

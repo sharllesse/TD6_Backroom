@@ -20,7 +20,13 @@ public class TD6_Backroom : ModuleRules
 			"OnlineSubsystemEOS",
 			"EOSVoiceChat",
 			"EOSShared",
-			"EOSSDK"
+			"EOSSDK",
+			"LogicraftCoreUtils",
+			"DeveloperSettings",
+			"GameplayTags",
+			"HTTP",
+			"RenderCore",
+			"Renderer"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

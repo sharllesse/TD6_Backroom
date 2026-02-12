@@ -5,8 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "InputMappingContext.h"
-#include "Online/Tests/OWPlayerCharacter_OnlineTesting.h"
-#include "OWPlayerController_OnlineTesting.generated.h"
+#include "Character/BRPlayerCharacter.h"
+#include "BRPlayerController.generated.h"
 
 USTRUCT(BlueprintType, Blueprintable)
 struct FAction
@@ -27,7 +27,7 @@ struct FAction
  * 
  */
 UCLASS()
-class OVERWRITE_API AOWPlayerController_OnlineTesting : public APlayerController
+class TD6_BACKROOM_API ABRPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
@@ -38,7 +38,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inputs")
 	TArray<FAction> InputActions;
 
-	TWeakObjectPtr<AOWPlayerCharacter_OnlineTesting> OwningCharacter;
+	TWeakObjectPtr<ABRPlayerCharacter> OwningCharacter;
 
 protected:
 	virtual void BeginPlay() override;
@@ -60,8 +60,8 @@ protected:
 	UFUNCTION()
 	void OnJump(const FInputActionValue& InputActionValue);
 
-	UFUNCTION(BlueprintCallable)
-	void OnCreateSession_Debug();
-private:
-	void OnExternalUIChange(bool bIsOpening);
+// 	UFUNCTION(BlueprintCallable)
+// 	void OnCreateSession_Debug();
+// private:
+// 	void OnExternalUIChange(bool bIsOpening);
 };

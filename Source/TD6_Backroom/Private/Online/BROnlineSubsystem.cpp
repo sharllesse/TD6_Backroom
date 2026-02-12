@@ -6,16 +6,18 @@
 #include "LogCategory.h"
 #include "OnlineSessionSettings.h"
 #include "OnlineSubsystemUtils.h"
+#include "Blueprint/AsyncTaskDownloadImage.h"
 #include "Online/BROnlineGameTags.h"
 #include "Online/BROnlineSettings.h"
 
-#include "Interfaces/OnlineExternalUIInterface.h"
+#include "Interfaces/OnlinePresenceInterface.h"
 #include "Kismet/GameplayStatics.h"
+#include "Online/Http/BRAsyncTaskDownloadImage.h"
 
 #define ONLINE_LOG(Verbosity, Format, ...)\
 	UE_LOG(LogOWOnline, Verbosity, Format, ##__VA_ARGS__)
 
-UOWOnlineSubsystem::ThisClass* UOWOnlineSubsystem::Get(const UObject* WorldContext)
+UBROnlineSubsystem::ThisClass* UBROnlineSubsystem::Get(const UObject* WorldContext)
 {
 	if (UWorld* World{GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::LogAndReturnNull)})
 	{
@@ -25,7 +27,7 @@ UOWOnlineSubsystem::ThisClass* UOWOnlineSubsystem::Get(const UObject* WorldConte
 	return nullptr;
 }
 
-void UOWOnlineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+void UBROnlineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 	Collection.InitializeDependency<UEventBus>();
@@ -33,20 +35,20 @@ void UOWOnlineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Internal_RegisterDelegates();
 	Internal_LockCallbacksSignature();
 	
-	if (UOWOnlineSettings::Get()->bAutoLogin)
+	if (UBROnlineSettings::Get()->bAutoLogin)
 	{
 		Login();
 	}
 }
 
-void UOWOnlineSubsystem::Deinitialize()
+void UBROnlineSubsystem::Deinitialize()
 {
 	Super::Deinitialize();
 
 	Internal_ClearDelegates();
 }
 
-bool UOWOnlineSubsystem::Login(bool bUseCommandLine, const FOnlineAccountCredentials& OnlineAccountCredentials) const
+bool UBROnlineSubsystem::Login(bool bUseCommandLine, const FOnlineAccountCredentials& OnlineAccountCredentials) const
 {
 	return Internal_ExecuteOnValidContext(
 	[bUseCommandLine, &OnlineAccountCredentials](const IOnlineIdentityPtr& IdentityInterface)
@@ -74,7 +76,7 @@ bool UOWOnlineSubsystem::Login(bool bUseCommandLine, const FOnlineAccountCredent
 	}, Online::GetIdentityInterface(GetWorld()));
 }
 
-bool UOWOnlineSubsystem::Logout()
+bool UBROnlineSubsystem::Logout()
 {
 	return Internal_ExecuteOnValidContext(
 	[this](const IOnlineIdentityPtr& IdentityInterface)
@@ -95,7 +97,7 @@ bool UOWOnlineSubsystem::Logout()
 	}, Online::GetIdentityInterface(GetWorld()));
 }
 
-bool UOWOnlineSubsystem::CreateSession(int32 SessionMaxConnections, bool bIsPrivate)
+bool UBROnlineSubsystem::CreateSession(int32 SessionMaxConnections, bool bIsPrivate)
 {
 	UWorld* World{ GetWorld() };
 	
@@ -107,12 +109,12 @@ bool UOWOnlineSubsystem::CreateSession(int32 SessionMaxConnections, bool bIsPriv
 		const FString SessionName{ FString::Printf(TEXT("%s_Session"), *UniquePlayerId->ToString()) };
 
 		FOnlineSessionSettings OnlineSessionSettings;
-		OnlineSessionSettings.bAllowJoinInProgress = true;
+		OnlineSessionSettings.bAllowJoinInProgress = false;
 		OnlineSessionSettings.bAllowJoinViaPresenceFriendsOnly = !bIsPrivate;
 		OnlineSessionSettings.bAllowInvites = true;
 		OnlineSessionSettings.bUsesPresence = true;
-		OnlineSessionSettings.bUsesStats = true;
-		OnlineSessionSettings.Set("SETTINGS_SESSION_NAME", SessionName, EOnlineDataAdvertisementType::ViaOnlineService);
+		OnlineSessionSettings.bShouldAdvertise = !bIsPrivate;
+		OnlineSessionSettings.Set(Online_Settings_Session_Name, SessionName, EOnlineDataAdvertisementType::ViaOnlineService);
 
 		constexpr int32 MinimumConnections{ 1 };
 		SessionMaxConnections = FMath::Clamp(SessionMaxConnections, MinimumConnections, MaxSessionConnections);
@@ -124,35 +126,118 @@ bool UOWOnlineSubsystem::CreateSession(int32 SessionMaxConnections, bool bIsPriv
 		{
 			OnlineSessionSettings.NumPublicConnections = SessionMaxConnections;	
 		}
+
+		OnlineData.CurrentOnlineSessionSettings = MakeShared<FOnlineSessionSettings>(OnlineSessionSettings);
 		
 		return SessionInterface->CreateSession(*UniquePlayerId, NAME_GameSession, OnlineSessionSettings);
 	}, Online::GetSessionInterface(World), Online::GetIdentityInterface(World));
 }
 
-void UOWOnlineSubsystem::OnLoggingCompleted(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId,
+bool UBROnlineSubsystem::DestroySession()
+{
+	return Internal_ExecuteOnValidContext(
+	[this](const IOnlineSessionPtr& SessionInterface) 
+	{
+		return SessionInterface->DestroySession(NAME_GameSession);
+	}, Online::GetSessionInterface(GetWorld()));
+}
+
+bool UBROnlineSubsystem::FindSessions()
+{
+	return Internal_ExecuteOnValidContext([this](const IOnlineSessionPtr& SessionInterface)
+	{
+		const TSharedPtr CurrentSearchedSessionSettings
+			= OnlineData.CurrentSearchedSessionSettings
+			= MakeShared<FOnlineSessionSearch>();
+		CurrentSearchedSessionSettings->MaxSearchResults = 10;
+
+		return SessionInterface->FindSessions(0, CurrentSearchedSessionSettings.ToSharedRef());
+	}, Online::GetSessionInterface(GetWorld()));
+}
+
+bool UBROnlineSubsystem::JoinSession(const FOnlineSessionSearchResult& DesiredSession)
+{
+	return Internal_ExecuteOnValidContext([&DesiredSession](const IOnlineSessionPtr& SessionInterface)
+	{
+		return SessionInterface->JoinSession(0, NAME_GameSession, DesiredSession);
+	}, Online::GetSessionInterface(GetWorld()));
+}
+
+void UBROnlineSubsystem::LaunchRefreshSessionsTimer(float Rate)
+{
+	OnlineData.RefreshSessionsTimer
+		.Schedule(this, &UBROnlineSubsystem::OnRefreshSessionTimerFinish,
+		{
+			.bIsLooping = true, .Rate = Rate, .FirstDelay = 0.f
+		});
+}
+
+void UBROnlineSubsystem::StopRefreshSessionTimer()
+{
+	OnlineData.RefreshSessionsTimer.Clear();
+}
+
+bool UBROnlineSubsystem::QueryFriendList()
+{
+	return Internal_ExecuteOnValidContext(
+	[this](const IOnlineFriendsPtr& FriendsInterface)
+	{
+		return FriendsInterface->ReadFriendsList(0,
+			EFriendsLists::ToString(EFriendsLists::Default),
+			FOnReadFriendsListComplete::CreateUObject(this, &UBROnlineSubsystem::OnReadFriendsListComplete));
+	}, Online::GetFriendsInterface(GetWorld()));
+}
+
+FString UBROnlineSubsystem::GetAvatarURL(TSharedRef<FOnlineUser> OnlineUser)
+{
+	FString AvatarUrl;
+	if (OnlineUser->GetUserAttribute("avatarUrl", AvatarUrl))
+	{
+		return AvatarUrl;
+	}
+
+	return FString{};
+}
+
+void UBROnlineSubsystem::RetrievedAvatarTexture(const FString& AvatarUrl, FUniqueNetIdRef UserId)
+{
+	if (UBRAsyncTaskDownloadImage* AsyncTaskDownloadImage = UBRAsyncTaskDownloadImage::DownloadImage(AvatarUrl,
+		UserId.ToWeakPtr()))
+	{
+		AsyncTaskDownloadImage->OnSuccess.AddUObject(this, &UBROnlineSubsystem::OnAvatarTextureRetrieved);
+		AsyncTaskDownloadImage->OnFail.AddUObject(this, &UBROnlineSubsystem::OnAvatarTextureRetrieved);
+	}
+}
+
+void UBROnlineSubsystem::OnLoggingCompleted(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId,
                                             const FString& Error)
 {
 	if (!bWasSuccessful)
 	{
 		ONLINE_LOG(Error, TEXT("Login: Login was unsuccessful due to a error [Error: %s]"), *Error)
 	}
-#if !UE_BUILD_SHIPPING
 	else
 	{
+#if !UE_BUILD_SHIPPING
 		Internal_ExecuteOnValidContext(
 		[&UserId](const IOnlineIdentityPtr& IdentityInterface)
 		{
 			ONLINE_LOG(Log, TEXT("Login: Login was successful [User Name: %s]"),
 						*IdentityInterface->GetPlayerNickname(UserId))
-		}, Online::GetIdentityInterface(GetWorld()));	
-	}
+		}, Online::GetIdentityInterface(GetWorld()));
 #endif
+		
+		if (UBROnlineSettings::Get()->bAutoQueryFriends)
+		{
+			QueryFriendList();
+		}
+	}
 	
 	UEventBus::Broadcast<int32, bool, const FUniqueNetId&, const FString&>
 	(this, Online_Callback_OnLoginComplete, LocalUserNum, bWasSuccessful, UserId, Error);
 }
 
-void UOWOnlineSubsystem::OnLogoutCompleted(int32 LocalUserNum, bool bWasSuccessful)
+void UBROnlineSubsystem::OnLogoutCompleted(int32 LocalUserNum, bool bWasSuccessful)
 {
 	if (!bWasSuccessful)
 	{
@@ -166,7 +251,7 @@ void UOWOnlineSubsystem::OnLogoutCompleted(int32 LocalUserNum, bool bWasSuccessf
 	UEventBus::Broadcast(this, Online_Callback_OnLogoutComplete, LocalUserNum, bWasSuccessful);
 }
 
-void UOWOnlineSubsystem::OnLoginStatusChanged(int32 LocalUserNum, ELoginStatus::Type OldStatus,
+void UBROnlineSubsystem::OnLoginStatusChanged(int32 LocalUserNum, ELoginStatus::Type OldStatus,
 	ELoginStatus::Type NewStatus, const FUniqueNetId& NewId)
 {
 	ONLINE_LOG(Log,
@@ -177,44 +262,141 @@ void UOWOnlineSubsystem::OnLoginStatusChanged(int32 LocalUserNum, ELoginStatus::
 	(this, Online_Callback_OnLoginStatusChanged, LocalUserNum, OldStatus, NewStatus, NewId);
 }
 
-void UOWOnlineSubsystem::OnCreateSessionCompleted(FName SessionName, bool bWasSuccessful)
+void UBROnlineSubsystem::OnCreateSessionCompleted(FName, bool bWasSuccessful)
+{
+	if (Internal_ExecuteOnValidContext(
+		[this, bWasSuccessful](const TSharedPtr<FOnlineSessionSettings>& OnlineSessionSettings)
+		{
+			FString SessionName;
+			if (!OnlineSessionSettings->Get(Online_Settings_Session_Name, SessionName))
+			{
+				return false;
+			}
+
+			if (!bWasSuccessful)
+			{
+				ONLINE_LOG(Error, TEXT("Session: Creation of the session [Name: %s] has failed."), *SessionName)
+			}
+			else
+			{
+				ONLINE_LOG(Log, TEXT("Session: Creation of the session [Name: %s] was a success."), *SessionName)
+			}
+			
+			UEventBus::Broadcast<const FString&>(this, Online_Callback_OnCreateSessionCompleted,
+				SessionName, TWeakPtr<const FOnlineSessionSettings>{ OnlineSessionSettings }, bWasSuccessful);
+			
+			if (UBROnlineSettings::Get()->bAutoLoadMapOnSessionCreation && bWasSuccessful)
+			{
+				const FName LoadedMapPath{ UBROnlineSettings::Get()->LoadedMapOnSessionCreation.GetLongPackageName() };
+				const FString& LoadedMapOptions{ UBROnlineSettings::Get()->LoadedMapOptionsOnSessionCreation };
+				UGameplayStatics::OpenLevel(this, LoadedMapPath, true, LoadedMapOptions);
+			}
+			
+			return true;
+			
+		}, OnlineData.CurrentOnlineSessionSettings))
+	{
+		return;
+	}
+
+	ONLINE_LOG(Error, TEXT("Session: Unable to retrieve session settings. Fallback to the error broadcast."))
+
+	UEventBus::Broadcast<const FString&>(this, Online_Callback_OnCreateSessionCompleted,
+		FString{ Online_Settings_Error }, TWeakPtr<const FOnlineSessionSettings>{ nullptr }, bWasSuccessful);
+}
+
+void UBROnlineSubsystem::OnDestroySessionRequested(int32 LocalUserNum, FName)
+{
+	if (Internal_ExecuteOnValidContext(
+		[this, LocalUserNum](const TSharedPtr<FOnlineSessionSettings>& OnlineSessionSettings)
+		{
+			FString SessionName;
+			if (!OnlineSessionSettings->Get(Online_Settings_Session_Name, SessionName))
+			{
+				return false;
+			}
+
+			ONLINE_LOG(Log,
+				TEXT("Session: The Destroying process of the session [Name: %s] has been requested."),
+				*SessionName)
+			
+			UEventBus::Broadcast<const FString&>(this, Online_Callback_OnDestroySessionRequested, SessionName, LocalUserNum);
+
+			return true;
+		
+		}, OnlineData.CurrentOnlineSessionSettings))
+	{
+		return;
+	}
+
+	ONLINE_LOG(Error, TEXT("Session: Unable to retrieve session settings. Fallback to the error broadcast."))
+	
+	UEventBus::Broadcast<const FString&>(this, Online_Callback_OnDestroySessionRequested,
+		FString{ Online_Settings_Error }, LocalUserNum);
+}
+
+void UBROnlineSubsystem::OnDestroySessionCompleted(FName, bool bWasSuccessful)
+{
+	if (Internal_ExecuteOnValidContext(
+		[this, bWasSuccessful](const TSharedPtr<FOnlineSessionSettings>& OnlineSessionSettings)
+		{
+			FString SessionName;
+			if (!OnlineSessionSettings->Get(Online_Settings_Session_Name, SessionName))
+			{
+				return false;
+			}
+
+			if (!bWasSuccessful)
+			{
+				ONLINE_LOG(Error,
+					TEXT("Session: The Destroying process of the session [Name: %s] has failed."),
+					*SessionName)
+			}
+			else
+			{
+				ONLINE_LOG(Log,
+					TEXT("Session: The Destroying process of the session [Name: %s] was a success."),
+					*SessionName)
+			}
+
+			UEventBus::Broadcast<const FString&>(this, Online_Callback_OnDestroySessionCompleted,
+				SessionName, bWasSuccessful);
+
+			return true;
+
+		}, OnlineData.CurrentOnlineSessionSettings))
+	{
+		return;
+	}
+
+	ONLINE_LOG(Error, TEXT("Session: Unable to retrieve session settings. Fallback to the error broadcast."))
+	
+	UEventBus::Broadcast(this, Online_Callback_OnDestroySessionCompleted,
+		FString{ Online_Settings_Error }, bWasSuccessful);
+}
+
+void UBROnlineSubsystem::OnFindSessionsCompleted(bool bWasSuccessful)
 {
 	if (!bWasSuccessful)
 	{
-		ONLINE_LOG(Error, TEXT("Session: Creation of the session [Name: %s] has failed."), *SessionName.ToString())
+		ONLINE_LOG(Error, TEXT("Session: Session search was unsuccessful due to an unknown error."))
 	}
 	else
 	{
-		ONLINE_LOG(Log, TEXT("Session: Creation of the session [Name: %s] was a success."), *SessionName.ToString())
+		Internal_ExecuteOnValidContext(
+		[this, bWasSuccessful](const TSharedPtr<FOnlineSessionSearch>& OnlineSessionSearch)
+		{
+			const TArray<FOnlineSessionSearchResult>& SearchResults{ OnlineSessionSearch->SearchResults };
+			UEventBus::Broadcast<const TArray<FOnlineSessionSearchResult>&>(
+				this, Online_Callback_OnFindSessionsCompleted, SearchResults, bWasSuccessful);
+		}, OnlineData.CurrentSearchedSessionSettings);
 	}
-	
-	UEventBus::Broadcast(this, Online_Callback_OnCreateSessionCompleted, SessionName, bWasSuccessful);
 
-	UGameplayStatics::OpenLevel(this, "OnlineTestingMap", true, "listen");
+	UEventBus::Broadcast<const TArray<FOnlineSessionSearchResult>&>(
+		this, Online_Callback_OnFindSessionsCompleted, {}, bWasSuccessful);
 }
 
-void UOWOnlineSubsystem::OnDestroySessionRequested(int32 LocalUserNum, FName SessionName)
-{
-	ONLINE_LOG(Log, TEXT("Session: The Destroying process of the session [Name: %s] has benn requested."), *SessionName.ToString())
-	
-	UEventBus::Broadcast(this, Online_Callback_OnDestroySessionRequested, LocalUserNum, SessionName);
-}
-
-void UOWOnlineSubsystem::OnDestroySessionCompleted(FName SessionName, bool bWasSuccessful)
-{
-	if (!bWasSuccessful)
-	{
-		ONLINE_LOG(Error, TEXT("Session: The Destroying process of the session [Name: %s] has failed."), *SessionName.ToString())
-	}
-	else
-	{
-		ONLINE_LOG(Log, TEXT("Session: The Destroying process of the session [Name: %s] was a success."), *SessionName.ToString())
-	}
-	
-	UEventBus::Broadcast(this, Online_Callback_OnDestroySessionCompleted, SessionName, bWasSuccessful);
-}
-
-void UOWOnlineSubsystem::OnJoinSessionCompleted(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
+void UBROnlineSubsystem::OnJoinSessionCompleted(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
 	if (Result != EOnJoinSessionCompleteResult::Success)
 	{
@@ -236,10 +418,10 @@ void UOWOnlineSubsystem::OnJoinSessionCompleted(FName SessionName, EOnJoinSessio
 		}, Online::GetSessionInterface(GetWorld()), Online::GetExternalUIInterface(GetWorld()));
 	}
 
-	UEventBus::Broadcast(this, Online_Callback_OnJoinSessionCompleted, SessionName, Result);
+	UEventBus::Broadcast(this, Online_Callback_OnJoinSessionCompleted, Result);
 }
 
-void UOWOnlineSubsystem::OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId,
+void UBROnlineSubsystem::OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId,
                                                      FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult)
 {
 	if (!bWasSuccessful || !InviteResult.IsValid())
@@ -251,85 +433,194 @@ void UOWOnlineSubsystem::OnSessionUserInviteAccepted(const bool bWasSuccessful, 
 		Internal_ExecuteOnValidContext(
 		[this, &InviteResult](const IOnlineSessionPtr& SessionInterface)
 		{
-			const FUniqueNetIdPtr UniquePlayerId{ InviteResult.Session.OwningUserId };
-			const FString SessionName{ FString::Printf(TEXT("%s_Session"), *UniquePlayerId->ToString()) };
-
-			ONLINE_LOG(Log, TEXT("Session: Attempting to join a session [Name: %s] made by [Player Name: %s]."), *SessionName, *InviteResult.Session.OwningUserName)
+			ONLINE_LOG(Log, TEXT("Session: Attempting to join a session made by [Player Name: %s]."), *InviteResult.Session.OwningUserName)
 			
-			SessionInterface->JoinSession(0, FName{ SessionName }, InviteResult);
-		}, Online::GetSessionInterface(GetWorld()));	
+			SessionInterface->JoinSession(0, NAME_GameSession, InviteResult);
+		}, Online::GetSessionInterface(GetWorld()));
 	}
+
+	UEventBus::Broadcast<const bool, const int32, FUniqueNetIdPtr, const FOnlineSessionSearchResult&>(this,
+		Online_Callback_OnSessionUserInviteAccepted, bWasSuccessful, ControllerId, UserId, InviteResult);
 }
 
-void UOWOnlineSubsystem::OnSessionParticipantJoined(FName SessionName, const FUniqueNetId& UserId)
+void UBROnlineSubsystem::OnSessionStartCompleted(FName, bool bWasSuccessful)
 {
-	Internal_ExecuteOnValidContext(
-	[this, &UserId](const IOnlineIdentityPtr& IdentityInterface)
+	if (!bWasSuccessful)
 	{
-		const FString PlayerNickname{ IdentityInterface->GetPlayerNickname(UserId) };
+		ONLINE_LOG(Error, TEXT("Session: Start of the session was not successful."))
+	}
+	else
+	{
+		// Should activate seamless travel on the game mode.
 
-		ONLINE_LOG(Log, TEXT("Session: A player has joined the session [Player Name: %s]."), *PlayerNickname)	
-	}, Online::GetIdentityInterface(GetWorld()));
+		if (UBROnlineSettings::Get()->bAutoLoadMapOnSessionStart)
+		{
+			const FString MapPath{ UBROnlineSettings::Get()->LoadedMapOnSessionStart.GetLongPackageName() };
+			const FString MapOptions{ UBROnlineSettings::Get()->LoadedMapOptionsOnSessionStart };
+			const FString URL{ FString::Printf(TEXT("%s?%s"), *MapPath, *MapOptions) };
+			
+			GetWorld()->ServerTravel(URL, true);
+		}
+	}
+
+	UEventBus::Broadcast(this, Online_Callback_OnSessionStartCompleted, bWasSuccessful);
 }
 
-void UOWOnlineSubsystem::OnExternalUIChange(bool bIsOpening)
+void UBROnlineSubsystem::OnRefreshSessionTimerFinish()
 {
-	UEventBus::Broadcast(this, Online_Callback_OnExternalUIChange, bIsOpening);
+	UEventBus::Broadcast(this, Online_Callback_OnRefreshSessionTimerFinish);
+	
+	FindSessions();
 }
 
-void UOWOnlineSubsystem::Internal_RegisterDelegates()
+void UBROnlineSubsystem::OnPresenceReceived(const FUniqueNetId& UserId, const TSharedRef<FOnlineUserPresence>& Presence)
 {
+#if !UE_BUILD_SHIPPING
+	Internal_ExecuteOnValidContext(
+	[this, &UserId, &Presence](const IOnlineFriendsPtr& FriendsInterface)
+	{
+		if (const TSharedPtr OnlineFriend
+		{
+			FriendsInterface->GetFriend(0, UserId, EFriendsLists::ToString(EFriendsLists::Default))
+		})
+		{
+			ONLINE_LOG(Log,
+				TEXT("Presence: Updated user [Name: %s] presence [Presence info: %s]."),
+					*OnlineFriend->GetDisplayName(), *Presence->ToDebugString())
+		}
+	}, Online::GetFriendsInterface(GetWorld()));
+#endif
+		
+	UEventBus::Broadcast<const  FUniqueNetId&, const TSharedRef<FOnlineUserPresence>&>(
+		this, Online_Callback_OnPresenceReceived, UserId, Presence);
+}
+
+void UBROnlineSubsystem::OnReadFriendsListComplete(int32 LocalUserNum, bool bWasSuccessful, const FString& ListName,
+                                                   const FString& ErrorStr)
+{
+	if (!bWasSuccessful)
+	{
+		ONLINE_LOG(Error, TEXT("Friends: Reading of the friends list was unsuccessful [Error: %s]"), *ErrorStr)
+	}
+	else
+	{
+		if (Internal_ExecuteOnValidContext(
+		[this, LocalUserNum, bWasSuccessful, &ListName, &ErrorStr](const IOnlineFriendsPtr& FriendsInterface)
+		{
+			TArray<TSharedRef<FOnlineFriend>> OnlineFriends;
+			if (FriendsInterface->GetFriendsList(0, ListName, OnlineFriends))
+			{
+				return false;
+			}
+			
+			UEventBus::Broadcast<int32, bool, const TArray<TSharedRef<FOnlineFriend>>&, const FString&>(this,
+				Online_Callback_OnReadFriendsListCompleted, LocalUserNum, bWasSuccessful, OnlineFriends, ErrorStr);
+
+			return true;
+		}, Online::GetFriendsInterface(GetWorld())))
+		{
+			return;
+		}
+
+		ONLINE_LOG(Error,
+			TEXT("Friends: Unable to retrieve the Friends interface or could not get the friends list."))
+	}
+	
+	UEventBus::Broadcast<int32, bool, const TArray<TSharedRef<FOnlineFriend>>&, const FString&>(this,
+	Online_Callback_OnReadFriendsListCompleted, LocalUserNum, bWasSuccessful, {}, ErrorStr);
+}
+
+void UBROnlineSubsystem::OnAvatarTextureRetrieved(UTexture2DDynamic* Texture, FUniqueNetIdWeakPtr UserId)
+{
+	if (!Texture)
+	{
+		ONLINE_LOG(Error, TEXT("Friends: The avatar texture was not retrieved correctly."))
+	}
+	
+	UEventBus::Broadcast(this, Online_Callback_OnAvatarTextureRetrieved, Texture, UserId);
+}
+
+//
+//
+// void UBROnlineSubsystem::OnSessionParticipantJoined(FName SessionName, const FUniqueNetId& UserId)
+// {
+// 	Internal_ExecuteOnValidContext(
+// 	[this, &UserId](const IOnlineIdentityPtr& IdentityInterface)
+// 	{
+// 		const FString PlayerNickname{ IdentityInterface->GetPlayerNickname(UserId) };
+//
+// 		ONLINE_LOG(Log, TEXT("Session: A player has joined the session [Player Name: %s]."), *PlayerNickname)	
+// 	}, Online::GetIdentityInterface(GetWorld()));
+// }
+//
+// void UBROnlineSubsystem::OnExternalUIChange(bool bIsOpening)
+// {
+// 	UEventBus::Broadcast(this, Online_Callback_OnExternalUIChange, bIsOpening);
+// }
+
+void UBROnlineSubsystem::Internal_RegisterDelegates()
+{
+	const UWorld* World{ GetWorld() };
+	
 	Internal_ExecuteOnValidContext(
 	[this](const IOnlineIdentityPtr& IdentityInterface)
 	{
 		IdentityInterface->AddOnLoginCompleteDelegate_Handle(0,
-			FOnLoginCompleteDelegate::CreateUObject(this, &UOWOnlineSubsystem::OnLoggingCompleted));
+			FOnLoginCompleteDelegate::CreateUObject(this, &UBROnlineSubsystem::OnLoggingCompleted));
 
 		IdentityInterface->AddOnLogoutCompleteDelegate_Handle(0,
-			FOnLogoutCompleteDelegate::CreateUObject(this, &UOWOnlineSubsystem::OnLogoutCompleted));
+			FOnLogoutCompleteDelegate::CreateUObject(this, &UBROnlineSubsystem::OnLogoutCompleted));
 
 		IdentityInterface->AddOnLoginStatusChangedDelegate_Handle(0,
-			FOnLoginStatusChangedDelegate::CreateUObject(this, &UOWOnlineSubsystem::OnLoginStatusChanged));
-	}, Online::GetIdentityInterface(GetWorld()));
+			FOnLoginStatusChangedDelegate::CreateUObject(this, &UBROnlineSubsystem::OnLoginStatusChanged));
+	}, Online::GetIdentityInterface(World));
 
 	Internal_ExecuteOnValidContext(
 	[this](const IOnlineSessionPtr& SessionInterface)
 	{
 		SessionInterface->AddOnCreateSessionCompleteDelegate_Handle(
-			FOnCreateSessionCompleteDelegate::CreateUObject(this, &UOWOnlineSubsystem::OnCreateSessionCompleted));
-
+			FOnCreateSessionCompleteDelegate::CreateUObject(this, &UBROnlineSubsystem::OnCreateSessionCompleted));
+	
 		SessionInterface->AddOnDestroySessionRequestedDelegate_Handle(
-			FOnDestroySessionRequestedDelegate::CreateUObject(this, &UOWOnlineSubsystem::OnDestroySessionRequested));
-
+			FOnDestroySessionRequestedDelegate::CreateUObject(this, &UBROnlineSubsystem::OnDestroySessionRequested));
+	
 		SessionInterface->AddOnDestroySessionCompleteDelegate_Handle(
-			FOnDestroySessionCompleteDelegate::CreateUObject(this, &UOWOnlineSubsystem::OnDestroySessionCompleted));
+			FOnDestroySessionCompleteDelegate::CreateUObject(this, &UBROnlineSubsystem::OnDestroySessionCompleted));
 
+		SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(
+			FOnFindSessionsCompleteDelegate::CreateUObject(this, &UBROnlineSubsystem::OnFindSessionsCompleted));
+		
 		SessionInterface->AddOnJoinSessionCompleteDelegate_Handle(
-			FOnJoinSessionCompleteDelegate::CreateUObject(this, &UOWOnlineSubsystem::OnJoinSessionCompleted));
+			FOnJoinSessionCompleteDelegate::CreateUObject(this, &UBROnlineSubsystem::OnJoinSessionCompleted));
 		
 		SessionInterface->AddOnSessionUserInviteAcceptedDelegate_Handle(
-			FOnSessionUserInviteAcceptedDelegate::CreateUObject(this, &UOWOnlineSubsystem::OnSessionUserInviteAccepted));
+			FOnSessionUserInviteAcceptedDelegate::CreateUObject(this, &UBROnlineSubsystem::OnSessionUserInviteAccepted));
 
-		SessionInterface->AddOnSessionParticipantJoinedDelegate_Handle(
-			FOnSessionParticipantJoinedDelegate::CreateUObject(this, &UOWOnlineSubsystem::OnSessionParticipantJoined));
-	}, Online::GetSessionInterface(GetWorld()));
+		SessionInterface->AddOnStartSessionCompleteDelegate_Handle(
+			FOnStartSessionCompleteDelegate::CreateUObject(this, &UBROnlineSubsystem::OnSessionStartCompleted));
+		
+		// SessionInterface->AddOnSessionParticipantJoinedDelegate_Handle(
+		// 	FOnSessionParticipantJoinedDelegate::CreateUObject(this, &UBROnlineSubsystem::OnSessionParticipantJoined));
+	}, Online::GetSessionInterface(World));
 
-	Internal_ExecuteOnValidContext([this](const IOnlineExternalUIPtr& ExternalUIInterface)
+	Internal_ExecuteOnValidContext([this](const IOnlinePresencePtr& PresenceInterface)
 	{
-		ExternalUIInterface->AddOnExternalUIChangeDelegate_Handle(
-			FOnExternalUIChangeDelegate::CreateUObject(this, &UOWOnlineSubsystem::OnExternalUIChange));
-	}, Online::GetExternalUIInterface(GetWorld()));
+		PresenceInterface->AddOnPresenceReceivedDelegate_Handle(
+			FOnPresenceReceivedDelegate::CreateUObject(this, &UBROnlineSubsystem::OnPresenceReceived));
+	}, Online::GetPresenceInterface(World));
 }
 
-void UOWOnlineSubsystem::Internal_ClearDelegates()
+void UBROnlineSubsystem::Internal_ClearDelegates()
 {
+	const UWorld* World{ GetWorld() };
+	
 	Internal_ExecuteOnValidContext(
 	[this](const IOnlineIdentityPtr& IdentityInterface)
 	{
 		IdentityInterface->ClearOnLoginCompleteDelegates(0, this);
 		IdentityInterface->ClearOnLogoutCompleteDelegates(0, this);
 		IdentityInterface->ClearOnLoginStatusChangedDelegates(0, this);
-	}, Online::GetIdentityInterface(GetWorld()));
+	}, Online::GetIdentityInterface(World));
 
 	Internal_ExecuteOnValidContext(
 	[this](const IOnlineSessionPtr& SessionInterface)
@@ -337,26 +628,32 @@ void UOWOnlineSubsystem::Internal_ClearDelegates()
 		SessionInterface->ClearOnCreateSessionCompleteDelegates(this);
 		SessionInterface->ClearOnDestroySessionRequestedDelegates(this);
 		SessionInterface->ClearOnDestroySessionCompleteDelegates(this);
+		SessionInterface->ClearOnFindSessionsCompleteDelegates(this);
 		SessionInterface->ClearOnSessionUserInviteAcceptedDelegates(this);
-		SessionInterface->ClearOnSessionParticipantJoinedDelegates(this);
-	}, Online::GetSessionInterface(GetWorld()));
-	
-	Internal_ExecuteOnValidContext([this](const IOnlineExternalUIPtr& ExternalUIInterface)
+		//SessionInterface->ClearOnSessionParticipantJoinedDelegates(this);
+		SessionInterface->ClearOnStartSessionCompleteDelegates(this);
+	}, Online::GetSessionInterface(World));
+
+	Internal_ExecuteOnValidContext([this](const IOnlinePresencePtr& PresenceInterface)
 	{
-		ExternalUIInterface->ClearOnExternalUIChangeDelegates(this);
-	}, Online::GetExternalUIInterface(GetWorld()));
+		PresenceInterface->ClearOnPresenceReceivedDelegates(this);
+	}, Online::GetPresenceInterface(World));
 }
 
-void UOWOnlineSubsystem::Internal_LockCallbacksSignature()
+void UBROnlineSubsystem::Internal_LockCallbacksSignature()
 {
 	UEventBus::LockSignature<int32, bool, const FUniqueNetId&, const FString&>(this, Online_Callback_OnLoginComplete);
 	UEventBus::LockSignature<int32, bool>(this, Online_Callback_OnLogoutComplete);
 	UEventBus::LockSignature<int32, ELoginStatus::Type, ELoginStatus::Type, const FUniqueNetId&>(this, Online_Callback_OnLoginStatusChanged);
 
-	UEventBus::LockSignature<FName, bool>(this, Online_Callback_OnCreateSessionCompleted);
-	UEventBus::LockSignature<int32, FName>(this, Online_Callback_OnDestroySessionRequested);
+	UEventBus::LockSignature<const FString&, TWeakPtr<const FOnlineSessionSettings>, bool>(this, Online_Callback_OnCreateSessionCompleted);
+	UEventBus::LockSignature<const FString&, int32>(this, Online_Callback_OnDestroySessionRequested);
 	UEventBus::LockSignature<FName, bool>(this, Online_Callback_OnDestroySessionCompleted);
-	UEventBus::LockSignature<FName, EOnJoinSessionCompleteResult::Type>(this, Online_Callback_OnJoinSessionCompleted);
+	UEventBus::LockSignature<const TArray<FOnlineSessionSearchResult>&, bool>(this, Online_Callback_OnFindSessionsCompleted);
+	UEventBus::LockSignature<EOnJoinSessionCompleteResult::Type>(this, Online_Callback_OnJoinSessionCompleted);
+	UEventBus::LockSignature<const bool, const int32, FUniqueNetIdPtr, const FOnlineSessionSearchResult&>(this, Online_Callback_OnSessionUserInviteAccepted);
 
-	UEventBus::LockSignature<bool>(this, Online_Callback_OnExternalUIChange);
+	UEventBus::LockSignature<const FUniqueNetId&, const TSharedRef<FOnlineUserPresence>&>(this, Online_Callback_OnPresenceReceived);
+	UEventBus::LockSignature<int32, bool, const TArray<TSharedRef<FOnlineFriend>>&, const FString&>(this, Online_Callback_OnReadFriendsListCompleted);
+	UEventBus::LockSignature<UTexture2DDynamic*, FUniqueNetIdWeakPtr>(this, Online_Callback_OnAvatarTextureRetrieved);
 }
