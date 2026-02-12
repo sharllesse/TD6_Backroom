@@ -7,17 +7,49 @@
 #include "BROnlineSettings.generated.h"
 
 /**
- * 
+ * Default parameters used by the BROnlineSubsystem.
  */
 UCLASS(Config=Game, defaultconfig, DisplayName = "Online Settings")
-class OVERWRITE_API UOWOnlineSettings : public UDeveloperSettings
+class TD6_BACKROOM_API UBROnlineSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
 
 public:
-	/** If true, will attempt a connection to the selected service. */
+	/** If true, will attempt a connection to the selected service at the game start. */
 	UPROPERTY(Config, EditAnywhere, Category = "Login")
 	bool bAutoLogin{ true };
+
+	/** If true, will attempt a query of the friends list of the selected service after the logging has been completed. */
+	UPROPERTY(Config, EditAnywhere, Category = "Friends")
+	bool bAutoQueryFriends{ true };
+
+	/** If true, will attempt to load the selected map after a session has been successfully created. */
+	UPROPERTY(Config, EditAnywhere, Category = "Session|Create")
+	bool bAutoLoadMapOnSessionCreation{ true };
 	
-	static const ThisClass* Get() { return GetDefault<UOWOnlineSettings>(); }
+	UPROPERTY(Config, EditAnywhere, Category = "Session|Create", meta = (AllowedClasses = "/Script/Engine.World", EditCondition = "bAutoLoadMapOnSessionCreation"))
+	FSoftObjectPath LoadedMapOnSessionCreation;
+
+	/**
+	 * Parameters used to load the map in LoadedMapOnSessionCreation,
+	 * listen is placed by default removing this options could cause a crash.
+	 */
+	UPROPERTY(Config, EditAnywhere, Category = "Session|Create", meta = (EditCondition = "bAutoLoadMapOnSessionCreation"))
+	FString LoadedMapOptionsOnSessionCreation{ TEXT("listen") };
+
+	/** If true, will attempt to load the selected map after a session has been successfully created. */
+	UPROPERTY(Config, EditAnywhere, Category = "Session|Start")
+	bool bAutoLoadMapOnSessionStart{ true };
+	
+	UPROPERTY(Config, EditAnywhere, Category = "Session|Start", meta = (AllowedClasses = "/Script/Engine.World", EditCondition = "bAutoLoadMapOnSessionStart"))
+	FSoftObjectPath LoadedMapOnSessionStart;
+
+	/**
+	 * Parameters used to load the map in LoadedMapOnSessionCreation,
+	 * listen is placed by default removing this options could cause a crash.
+	 */
+	UPROPERTY(Config, EditAnywhere, Category = "Session|Start", meta = (EditCondition = "bAutoLoadMapOnSessionStart"))
+	FString LoadedMapOptionsOnSessionStart{ TEXT("listen") };
+	
+	static const ThisClass* Get() { return GetDefault<UBROnlineSettings>(); }
 };

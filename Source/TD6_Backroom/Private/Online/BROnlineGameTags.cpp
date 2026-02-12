@@ -23,12 +23,48 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnLoginStatusChanged, "Online.Cal
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnCreateSessionCompleted, "Online.Callback.OnCreateSessionCompleted",
 								"A callback made to notify when a session creation has been successful or not.\n"
 								"Be aware that before this callback is triggered, the session is not ready yet, even if it failed.\n"
-								"[Args: FName SessionName, bool bWasSuccessful]")
+								"[Args: const FString& SessionName, TWeakPtr<const FOnlineSessionSettings>, bool bWasSuccessful]")
 
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnDestroySessionRequested, "Online.Callback.OnDestroySessionRequested", "")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnDestroySessionRequested, "Online.Callback.OnDestroySessionRequested",
+								"A callback made to notify when a session destroying process has been requested.\n"
+								"[Args: const FString& SessionName, int32 LocalUserNum]")
 
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnDestroySessionCompleted, "Online.Callback.OnDestroySessionCompleted", "")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnDestroySessionCompleted, "Online.Callback.OnDestroySessionCompleted",
+								"A callback made to notify when a session destroying process has been completed.\n"
+								"Be aware that the process could be unsuccessful and SessionName could contain Online_Settings_Error.\n"
+								"[Args: const FString& SessionName, bool bWasSuccessful]")
 
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnJoinSessionCompleted, "Online.Callback.OnJoinSessionCompleted", "")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnFindSessionsCompleted, "Online.Callback.OnFindSessionsCompleted",
+								"A callback made to notify when the search of sessions is completed.\n"
+								"[Args: const TArray<FOnlineSessionSearchResult>& SessionsResult, bool bWasSuccessful]")	
 
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnExternalUIChange, "Online.Callback.OnExternalUIChange", "")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnJoinSessionCompleted, "Online.Callback.OnJoinSessionCompleted",
+								"A callback made to notify when the join session process is completed.\n"
+								"[Args: EOnJoinSessionCompleteResult::Type Result]")
+
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnSessionUserInviteAccepted, "Online.Callback.OnSessionUserInviteAccepted",
+								"A callback that notify when the user has accepted an invitation or just joined a friend (Using the friend list).\n"
+								"[Args: const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult]")
+
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnSessionStartCompleted, "Online.Callback.OnSessionStartCompleted",
+								"A callback that notify when the session has started.\n"
+								"[Args: bool bWasSuccessful]")
+
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnRefreshSessionTimerFinish, "Online.Callback.OnRefreshSessionTimerFinish",
+								"A callback made to notify when the refresh timer has finish.\n"
+								"[Args: ]")
+
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnPresenceReceived, "Online.Callback.OnPresenceReceived",
+								"A callback made to notify when a friends presence has changed.\n"
+								"[Args: const FUniqueNetId& UserId, const TSharedRef<FOnlineUserPresence>& Presence]")
+
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnReadFriendsListCompleted, "Online.Callback.OnReadFriendsListCompleted",
+								"A callback made to notify when the query friends list has completed.\n"
+								"[Args: int32 LocalUserNum, bool bWasSuccessful, const TArray<TSharedRef<FOnlineFriend>>& OnlineFriends, const FString& ErrorStr]")
+
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnAvatarTextureRetrieved, "Online.Callback.OnAvatarTextureRetrieved",
+								"A callback that notify when the request to retrieved the avatar texture is a success or not.\n"
+								"Be aware that if the retrieve process failed, Texture is equal to nullptr.\n"
+								"[Args: UTexture2DDynamic* Texture, FUniqueNetIdWeakPtr UserId]")
+
+// UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnExternalUIChange, "Online.Callback.OnExternalUIChange", "")
