@@ -4,13 +4,39 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "EventBus.h"
+#include "OnlineSubsystemUtils.h"
+#include "Blueprint/UserWidget.h"
 #include "Online/BROnlineGameTags.h"
 #include "Online/BROnlineSubsystem.h"
+#include "UI/FriendListWidget.h"
+#include "UI/MainMenuWidget.h"
+#include "UI/UIManagerSubsystem.h"
 
 void ABRPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	MainMenu = GetLocalPlayer()->GetSubsystem<UUIManagerSubsystem>()->PushMenu<UMainMenuWidget>();
+
+	UEventBus::AddLambda(this, Online_Callback_OnLoginComplete, [&]( int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
+	{
+		auto OnlineSubsystem = GetGameInstance()->GetSubsystem<UBROnlineSubsystem>();
+		OnlineSubsystem->QueryFriendList();
+	});
+	
+	UEventBus::AddLambda(this, Online_Callback_OnReadFriendsListCompleted,
+		[&](int32 LocalUserNum, bool bWasSuccessful, const TArray<TSharedRef<FOnlineFriend>>& OnlineFriends, const FString& ErrorStr)
+	{
+		if (bWasSuccessful)
+		{
+			MainMenu->FriendList->UpdateUser(OnlineFriends);
+		}
+	});
+
+	
+
+	
+	
 	//UEventBus::AddUObject(this, Online_Callback_OnExternalUIChange, this, &ABRPlayerController::OnExternalUIChange);
 }
 
@@ -92,6 +118,14 @@ void ABRPlayerController::OnLook(const FInputActionValue& InputActionValue)
 void ABRPlayerController::OnJump(const FInputActionValue& InputActionValue)
 {
 	OwningCharacter->OnJump(InputActionValue);
+}
+
+void ABRPlayerController::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+
+	
 }
 
 // void ABRPlayerController::OnCreateSession_Debug()
