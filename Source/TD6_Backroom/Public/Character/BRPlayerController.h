@@ -5,8 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "InputMappingContext.h"
+#include "TimerHolder.h"
 #include "Character/BRPlayerCharacter.h"
 #include "BRPlayerController.generated.h"
+
+class UMainMenuWidget;
 
 USTRUCT(BlueprintType, Blueprintable)
 struct FAction
@@ -40,6 +43,12 @@ protected:
 
 	TWeakObjectPtr<ABRPlayerCharacter> OwningCharacter;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UMainMenuWidget> MainMenuClass;
+	
+	UPROPERTY()
+	TObjectPtr<UMainMenuWidget> MainMenu;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -59,6 +68,8 @@ protected:
 
 	UFUNCTION()
 	void OnJump(const FInputActionValue& InputActionValue);
+
+	virtual void Tick(float DeltaSeconds) override;
 
 // 	UFUNCTION(BlueprintCallable)
 // 	void OnCreateSession_Debug();
