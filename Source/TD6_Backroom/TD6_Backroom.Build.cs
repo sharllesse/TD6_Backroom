@@ -26,7 +26,8 @@ public class TD6_Backroom : ModuleRules
 			"GameplayTags",
 			"HTTP",
 			"RenderCore",
-			"Renderer"
+			"Renderer",
+			"UMG"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

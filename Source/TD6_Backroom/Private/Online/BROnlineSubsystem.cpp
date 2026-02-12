@@ -201,6 +201,11 @@ FString UBROnlineSubsystem::GetAvatarURL(TSharedRef<FOnlineUser> OnlineUser)
 
 void UBROnlineSubsystem::RetrievedAvatarTexture(const FString& AvatarUrl, FUniqueNetIdRef UserId)
 {
+	if (AvatarUrl.IsEmpty())
+	{
+		UEventBus::Broadcast<UTexture2DDynamic*>(this, Online_Callback_OnAvatarTextureRetrieved, nullptr, UserId.ToWeakPtr());		
+	}
+	
 	if (UBRAsyncTaskDownloadImage* AsyncTaskDownloadImage = UBRAsyncTaskDownloadImage::DownloadImage(AvatarUrl,
 		UserId.ToWeakPtr()))
 	{
@@ -508,7 +513,7 @@ void UBROnlineSubsystem::OnReadFriendsListComplete(int32 LocalUserNum, bool bWas
 		[this, LocalUserNum, bWasSuccessful, &ListName, &ErrorStr](const IOnlineFriendsPtr& FriendsInterface)
 		{
 			TArray<TSharedRef<FOnlineFriend>> OnlineFriends;
-			if (FriendsInterface->GetFriendsList(0, ListName, OnlineFriends))
+			if (!FriendsInterface->GetFriendsList(0, ListName, OnlineFriends))
 			{
 				return false;
 			}
