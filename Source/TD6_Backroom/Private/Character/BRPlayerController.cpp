@@ -22,6 +22,10 @@ void ABRPlayerController::BeginPlay()
 	{
 		auto OnlineSubsystem = GetGameInstance()->GetSubsystem<UBROnlineSubsystem>();
 		OnlineSubsystem->QueryFriendList();
+		Chain::Execute(MainMenu.Get(), [](UMainMenuWidget* Widget)
+		{
+			Widget->FriendList->UpdateLocalPlayer();
+		});
 	});
 	
 	UEventBus::AddLambda(this, Online_Callback_OnReadFriendsListCompleted,

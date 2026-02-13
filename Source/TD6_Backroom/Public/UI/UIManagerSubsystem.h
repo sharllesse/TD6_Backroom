@@ -40,6 +40,30 @@ public:
 	
 	template<typename T>
 	requires std::is_base_of_v<UUserWidget, T>
+	T* CreateWidget()
+	{
+		auto NewWidget = Linq::Start(ManagerData->WidgetList).First([](const TSubclassOf<UUserWidget>& Widget)
+		{
+			return Widget->IsChildOf(T::StaticClass());
+		});
+		
+		if(!NewWidget)
+		{
+			return nullptr;
+		}
+		
+		auto WidgetInstance = ::CreateWidget(GetLocalPlayer()->GetPlayerController(GetWorld()), *NewWidget);
+		Chain::Execute(WidgetInstance,[](UUserWidget* Widget)
+				{
+					Widget->AddToViewport();
+				});
+		
+		WidgetStack.Add(WidgetInstance);
+		return Cast<T>(WidgetInstance);
+	}
+	
+	template<typename T>
+	requires std::is_base_of_v<UUserWidget, T>
 	T* PushMenu(bool bHidePreviousMenu = true)
 	{
 		auto NewWidget = Linq::Start(ManagerData->WidgetList).First([](const TSubclassOf<UUserWidget>& Widget)
@@ -52,7 +76,7 @@ public:
 			return nullptr;
 		}
 		
-		auto WidgetInstance = CreateWidget(GetLocalPlayer()->GetPlayerController(GetWorld()), *NewWidget);
+		auto WidgetInstance = ::CreateWidget(GetLocalPlayer()->GetPlayerController(GetWorld()), *NewWidget);
 		Chain::Execute(WidgetInstance,[](UUserWidget* Widget)
 				{
 					Widget->AddToViewport();
@@ -70,8 +94,6 @@ public:
 		
 		WidgetStack.Add(WidgetInstance);
 		return Cast<T>(WidgetInstance);
-		
-		return nullptr;
 	}
 
 	void PopMenu()
@@ -81,7 +103,7 @@ public:
 			return;
 		}
 
-		WidgetStack.Last()->RemoveFromParent();w
+		WidgetStack.Last()->RemoveFromParent();
 		WidgetStack.RemoveAt(WidgetStack.Num() - 1);
 
 		if (WidgetStack.IsEmpty())
