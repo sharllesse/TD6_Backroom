@@ -9,6 +9,7 @@
 #include "Character/BRPlayerCharacter.h"
 #include "BRPlayerController.generated.h"
 
+class UCreateRoomWidget;
 class UMainMenuWidget;
 
 USTRUCT(BlueprintType, Blueprintable)
@@ -48,6 +49,9 @@ protected:
 	
 	UPROPERTY()
 	TObjectPtr<UMainMenuWidget> MainMenu;
+	
+	UPROPERTY()
+	TObjectPtr<UCreateRoomWidget> CreateRoomWidget;
 
 protected:
 	virtual void BeginPlay() override;

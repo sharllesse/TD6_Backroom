@@ -7,6 +7,7 @@
 #include "Components/Button.h"
 #include "Components/Slider.h"
 #include "Components/TextBlock.h"
+#include "Components/EditableTextBox.h"
 #include "Components/CheckBox.h"
 #include "Online/BROnlineSubsystem.h"
 #include "UI/UIManagerSubsystem.h"
@@ -25,7 +26,7 @@ void UCreateRoomWidget::CreateSession()
 {
 	Chain::Execute(UBROnlineSubsystem::Get(GetWorld()), [&](UBROnlineSubsystem* Object)
 	{
-		Object->CreateSession(static_cast<int>(Slider->GetValue()), IsPrivateRoom->IsChecked());
+		Object->CreateSession(static_cast<int>(Slider->GetValue()), RoomName->GetText().ToString(), IsPrivateRoom->IsChecked());
 	});
 }
 
