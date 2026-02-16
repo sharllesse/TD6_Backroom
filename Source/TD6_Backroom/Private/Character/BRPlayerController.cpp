@@ -4,13 +4,52 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "EventBus.h"
+#include "OnlineSubsystemUtils.h"
+#include "Blueprint/UserWidget.h"
 #include "Online/BROnlineGameTags.h"
 #include "Online/BROnlineSubsystem.h"
+#include "UI/FriendListWidget.h"
+#include "UI/MainMenuWidget.h"
+#include "UI/CreateRoomWidget.h"
+#include "UI/UIManagerSubsystem.h"
 
 void ABRPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	MainMenu = GetLocalPlayer()->GetSubsystem<UUIManagerSubsystem>()->PushMenu<UMainMenuWidget>();
+
+	UEventBus::AddLambda(this, Online_Callback_OnLoginComplete, [&]( int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
+	{
+		auto OnlineSubsystem = GetGameInstance()->GetSubsystem<UBROnlineSubsystem>();
+		OnlineSubsystem->QueryFriendList();
+		Chain::Execute(MainMenu.Get(), [](UMainMenuWidget* Widget)
+		{
+			Widget->FriendList->UpdateLocalPlayer();
+		});
+
+		SetInputMode(FInputModeUIOnly());
+		bShowMouseCursor = true;
+		CreateRoomWidget = GetLocalPlayer()->GetSubsystem<UUIManagerSubsystem>()->PushMenu<UCreateRoomWidget>();
+	});
+	
+	UEventBus::AddLambda(this, Online_Callback_OnReadFriendsListCompleted,
+		[&](int32 LocalUserNum, bool bWasSuccessful, const TArray<TSharedRef<FOnlineFriend>>& OnlineFriends, const FString& ErrorStr)
+	{
+		if (bWasSuccessful)
+		{
+			MainMenu->FriendList->UpdateUser(OnlineFriends);
+		}
+	});
+	
+	
+	UEventBus::AddLambda(this, Online_Callback_OnPresenceReceived,
+		[&](const FUniqueNetId& UserId, const TSharedRef<FOnlineUserPresence>& Presence)
+		{
+			MainMenu->FriendList->UpdateUser(UserId, Presence);
+		});
+	
+	
 	//UEventBus::AddUObject(this, Online_Callback_OnExternalUIChange, this, &ABRPlayerController::OnExternalUIChange);
 }
 
@@ -18,7 +57,9 @@ void ABRPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 
-	//UEventBus::RemoveAll(this, Online_Callback_OnExternalUIChange, this);
+	UEventBus::RemoveAll(this, Online_Callback_OnPresenceReceived, this);
+	UEventBus::RemoveAll(this, Online_Callback_OnReadFriendsListCompleted, this);
+	UEventBus::RemoveAll(this, Online_Callback_OnLoginComplete, this);
 }
 
 void ABRPlayerController::SetupInputComponent()
@@ -93,6 +134,7 @@ void ABRPlayerController::OnJump(const FInputActionValue& InputActionValue)
 {
 	OwningCharacter->OnJump(InputActionValue);
 }
+
 
 // void ABRPlayerController::OnCreateSession_Debug()
 // {
