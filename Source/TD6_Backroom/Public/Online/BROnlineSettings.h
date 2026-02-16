@@ -23,6 +23,13 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Friends")
 	bool bAutoQueryFriends{ true };
 
+	/**
+	 * If true, will attempt a query of the friends list of the selected service.
+	 * This query is launched when change has occurred on the friends list (someone that has been blocked, unfriend, friend)
+	 */
+	UPROPERTY(Config, EditAnywhere, Category = "Friends")
+	bool bAutoQueryFriendsOnFriendsListChange{ true };
+
 	/** If true, will attempt to load the selected map after a session has been successfully created. */
 	UPROPERTY(Config, EditAnywhere, Category = "Session|Create")
 	bool bAutoLoadMapOnSessionCreation{ true };

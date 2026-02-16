@@ -97,16 +97,15 @@ bool UBROnlineSubsystem::Logout()
 	}, Online::GetIdentityInterface(GetWorld()));
 }
 
-bool UBROnlineSubsystem::CreateSession(int32 SessionMaxConnections, bool bIsPrivate)
+bool UBROnlineSubsystem::CreateSession(int32 SessionMaxConnections, const FString& SessionName, bool bIsPrivate)
 {
-	UWorld* World{ GetWorld() };
+	const UWorld* World{ GetWorld() };
 	
 	return Internal_ExecuteOnValidContext(
-	[this, SessionMaxConnections, bIsPrivate]
+	[this, SessionMaxConnections, SessionName, bIsPrivate]
 	(const IOnlineSessionPtr& SessionInterface, const IOnlineIdentityPtr& IdentityInterface) mutable 
 	{
 		const FUniqueNetIdPtr UniquePlayerId{ IdentityInterface->GetUniquePlayerId(0) };
-		const FString SessionName{ FString::Printf(TEXT("%s_Session"), *UniquePlayerId->ToString()) };
 
 		FOnlineSessionSettings OnlineSessionSettings;
 		OnlineSessionSettings.bAllowJoinInProgress = false;
@@ -471,6 +470,13 @@ void UBROnlineSubsystem::OnSessionStartCompleted(FName, bool bWasSuccessful)
 	UEventBus::Broadcast(this, Online_Callback_OnSessionStartCompleted, bWasSuccessful);
 }
 
+void UBROnlineSubsystem::OnSessionInviteReceived(const FUniqueNetId& UserId, const FUniqueNetId& FromId,
+	const FString& AppId, const FOnlineSessionSearchResult& InviteResult)
+{
+	UEventBus::Broadcast<const FUniqueNetId&, const FUniqueNetId&, const FString&, const FOnlineSessionSearchResult&>(
+		this, Online_Callback_OnSessionInviteReceived, UserId, FromId, AppId, InviteResult);
+}
+
 void UBROnlineSubsystem::OnRefreshSessionTimerFinish()
 {
 	UEventBus::Broadcast(this, Online_Callback_OnRefreshSessionTimerFinish);
@@ -484,6 +490,11 @@ void UBROnlineSubsystem::OnPresenceReceived(const FUniqueNetId& UserId, const TS
 	Internal_ExecuteOnValidContext(
 	[this, &UserId, &Presence](const IOnlineFriendsPtr& FriendsInterface)
 	{
+		if (!UserId.IsValid())
+		{
+			return;
+		}
+		
 		if (const TSharedPtr OnlineFriend
 		{
 			FriendsInterface->GetFriend(0, UserId, EFriendsLists::ToString(EFriendsLists::Default))
@@ -545,23 +556,20 @@ void UBROnlineSubsystem::OnAvatarTextureRetrieved(UTexture2DDynamic* Texture, FU
 	UEventBus::Broadcast(this, Online_Callback_OnAvatarTextureRetrieved, Texture, UserId);
 }
 
-//
-//
-// void UBROnlineSubsystem::OnSessionParticipantJoined(FName SessionName, const FUniqueNetId& UserId)
-// {
-// 	Internal_ExecuteOnValidContext(
-// 	[this, &UserId](const IOnlineIdentityPtr& IdentityInterface)
-// 	{
-// 		const FString PlayerNickname{ IdentityInterface->GetPlayerNickname(UserId) };
-//
-// 		ONLINE_LOG(Log, TEXT("Session: A player has joined the session [Player Name: %s]."), *PlayerNickname)	
-// 	}, Online::GetIdentityInterface(GetWorld()));
-// }
-//
-// void UBROnlineSubsystem::OnExternalUIChange(bool bIsOpening)
-// {
-// 	UEventBus::Broadcast(this, Online_Callback_OnExternalUIChange, bIsOpening);
-// }
+void UBROnlineSubsystem::OnBlockListChange(int32 LocalUserNum, const FString& ListName)
+{
+	QueryFriendList();
+}
+
+void UBROnlineSubsystem::OnFriendRemoved(const FUniqueNetId& UserId, const FUniqueNetId& FriendId)
+{
+	QueryFriendList();
+}
+
+void UBROnlineSubsystem::OnInviteAccepted(const FUniqueNetId& UserId, const FUniqueNetId& FriendId)
+{
+	QueryFriendList();
+}
 
 void UBROnlineSubsystem::Internal_RegisterDelegates()
 {
@@ -603,9 +611,9 @@ void UBROnlineSubsystem::Internal_RegisterDelegates()
 
 		SessionInterface->AddOnStartSessionCompleteDelegate_Handle(
 			FOnStartSessionCompleteDelegate::CreateUObject(this, &UBROnlineSubsystem::OnSessionStartCompleted));
-		
-		// SessionInterface->AddOnSessionParticipantJoinedDelegate_Handle(
-		// 	FOnSessionParticipantJoinedDelegate::CreateUObject(this, &UBROnlineSubsystem::OnSessionParticipantJoined));
+
+		SessionInterface->AddOnSessionInviteReceivedDelegate_Handle(
+			FOnSessionInviteReceivedDelegate::CreateUObject(this, &UBROnlineSubsystem::OnSessionInviteReceived));
 	}, Online::GetSessionInterface(World));
 
 	Internal_ExecuteOnValidContext([this](const IOnlinePresencePtr& PresenceInterface)
@@ -613,6 +621,18 @@ void UBROnlineSubsystem::Internal_RegisterDelegates()
 		PresenceInterface->AddOnPresenceReceivedDelegate_Handle(
 			FOnPresenceReceivedDelegate::CreateUObject(this, &UBROnlineSubsystem::OnPresenceReceived));
 	}, Online::GetPresenceInterface(World));
+
+	Internal_ExecuteOnValidContext([this](const IOnlineFriendsPtr& FriendsInterface)
+	{
+		FriendsInterface->AddOnBlockListChangeDelegate_Handle(0, 
+			FOnBlockListChangeDelegate::CreateUObject(this, &UBROnlineSubsystem::OnBlockListChange));
+		
+		FriendsInterface->AddOnFriendRemovedDelegate_Handle(
+			FOnFriendRemovedDelegate::CreateUObject(this, &UBROnlineSubsystem::OnFriendRemoved));
+
+		FriendsInterface->AddOnInviteAcceptedDelegate_Handle(
+			FOnInviteAcceptedDelegate::CreateUObject(this, &UBROnlineSubsystem::OnInviteAccepted));
+	}, Online::GetFriendsInterface(World));
 }
 
 void UBROnlineSubsystem::Internal_ClearDelegates()
@@ -635,14 +655,19 @@ void UBROnlineSubsystem::Internal_ClearDelegates()
 		SessionInterface->ClearOnDestroySessionCompleteDelegates(this);
 		SessionInterface->ClearOnFindSessionsCompleteDelegates(this);
 		SessionInterface->ClearOnSessionUserInviteAcceptedDelegates(this);
-		//SessionInterface->ClearOnSessionParticipantJoinedDelegates(this);
 		SessionInterface->ClearOnStartSessionCompleteDelegates(this);
+		SessionInterface->ClearOnSessionInviteReceivedDelegates(this);
 	}, Online::GetSessionInterface(World));
 
 	Internal_ExecuteOnValidContext([this](const IOnlinePresencePtr& PresenceInterface)
 	{
 		PresenceInterface->ClearOnPresenceReceivedDelegates(this);
 	}, Online::GetPresenceInterface(World));
+
+	Internal_ExecuteOnValidContext([this](const IOnlineFriendsPtr& FriendsInterface)
+	{
+		FriendsInterface->ClearOnFriendsChangeDelegates(0, this);
+	}, Online::GetFriendsInterface(World));
 }
 
 void UBROnlineSubsystem::Internal_LockCallbacksSignature()
@@ -657,7 +682,8 @@ void UBROnlineSubsystem::Internal_LockCallbacksSignature()
 	UEventBus::LockSignature<const TArray<FOnlineSessionSearchResult>&, bool>(this, Online_Callback_OnFindSessionsCompleted);
 	UEventBus::LockSignature<EOnJoinSessionCompleteResult::Type>(this, Online_Callback_OnJoinSessionCompleted);
 	UEventBus::LockSignature<const bool, const int32, FUniqueNetIdPtr, const FOnlineSessionSearchResult&>(this, Online_Callback_OnSessionUserInviteAccepted);
-
+	UEventBus::LockSignature<const FUniqueNetId&, const FUniqueNetId&, const FString&, const FOnlineSessionSearchResult&>(this, Online_Callback_OnSessionInviteReceived);
+	
 	UEventBus::LockSignature<const FUniqueNetId&, const TSharedRef<FOnlineUserPresence>&>(this, Online_Callback_OnPresenceReceived);
 	UEventBus::LockSignature<int32, bool, const TArray<TSharedRef<FOnlineFriend>>&, const FString&>(this, Online_Callback_OnReadFriendsListCompleted);
 	UEventBus::LockSignature<UTexture2DDynamic*, FUniqueNetIdWeakPtr>(this, Online_Callback_OnAvatarTextureRetrieved);

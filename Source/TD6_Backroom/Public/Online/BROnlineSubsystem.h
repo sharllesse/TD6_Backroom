@@ -51,7 +51,7 @@ public:
 				}) const;
 	bool Logout();
 
-	bool CreateSession(int32 SessionMaxConnections = MaxSessionConnections, bool bIsPrivate = false);
+	bool CreateSession(int32 SessionMaxConnections = MaxSessionConnections, const FString& SessionName = "Default", bool bIsPrivate = false);
 	bool DestroySession();
 	bool FindSessions();
 	bool JoinSession(const FOnlineSessionSearchResult& DesiredSession);
@@ -75,13 +75,16 @@ private:
 	void OnJoinSessionCompleted(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 	void OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult);
 	void OnSessionStartCompleted(FName, bool bWasSuccessful);
-	// void OnSessionParticipantJoined(FName SessionName, const FUniqueNetId& UserId);
+	void OnSessionInviteReceived(const FUniqueNetId& UserId, const FUniqueNetId& FromId, const FString& AppId, const FOnlineSessionSearchResult& InviteResult);
 
 	void OnRefreshSessionTimerFinish();
 
 	void OnPresenceReceived(const FUniqueNetId& UserId, const TSharedRef<FOnlineUserPresence>& Presence);
 	void OnReadFriendsListComplete(int32 LocalUserNum, bool bWasSuccessful, const FString& ListName, const FString& ErrorStr);
 	void OnAvatarTextureRetrieved(UTexture2DDynamic* Texture, FUniqueNetIdWeakPtr UserId);
+	void OnBlockListChange(int32 LocalUserNum, const FString& ListName);
+	void OnFriendRemoved(const FUniqueNetId& UserId, const FUniqueNetId& FriendId);
+	void OnInviteAccepted(const FUniqueNetId& UserId, const FUniqueNetId& FriendId);
 	
 	void Internal_RegisterDelegates();
 	void Internal_ClearDelegates();

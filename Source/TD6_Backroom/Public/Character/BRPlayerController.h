@@ -68,9 +68,7 @@ protected:
 
 	UFUNCTION()
 	void OnJump(const FInputActionValue& InputActionValue);
-
-	virtual void Tick(float DeltaSeconds) override;
-
+	
 // 	UFUNCTION(BlueprintCallable)
 // 	void OnCreateSession_Debug();
 // private:
