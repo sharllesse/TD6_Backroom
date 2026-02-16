@@ -25,7 +25,7 @@ void ABRPlayerController::BeginPlay()
 		Chain::Execute(MainMenu.Get(), [](UMainMenuWidget* Widget)
 		{
 			Widget->FriendList->UpdateLocalPlayer();
-		});
+		});		
 	});
 	
 	UEventBus::AddLambda(this, Online_Callback_OnReadFriendsListCompleted,
@@ -36,9 +36,13 @@ void ABRPlayerController::BeginPlay()
 			MainMenu->FriendList->UpdateUser(OnlineFriends);
 		}
 	});
-
 	
-
+	
+	UEventBus::AddLambda(this, Online_Callback_OnPresenceReceived,
+		[&](const FUniqueNetId& UserId, const TSharedRef<FOnlineUserPresence>& Presence)
+		{
+			MainMenu->FriendList->UpdateUser(UserId, Presence);
+		});
 	
 	
 	//UEventBus::AddUObject(this, Online_Callback_OnExternalUIChange, this, &ABRPlayerController::OnExternalUIChange);

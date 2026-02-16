@@ -35,7 +35,7 @@ void UUserInfoWidget::SetActivity(const FString& InActivity) const
 void UUserInfoWidget::SetPresence(const FString& InPresence, const FColor& ColorPresence) const
 {
 	Presence->SetText(FText::FromString(InPresence));
-	FSlateColor SlateColor(ColorPresence.FromRGBE());
+	FSlateColor SlateColor(ColorPresence);
 	Presence->SetColorAndOpacity(SlateColor);
 }
 

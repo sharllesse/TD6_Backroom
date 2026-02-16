@@ -29,11 +29,14 @@ protected:
 
 	void UpdateUser(const TSharedPtr<FOnlineFriend>& OnlineFriend, const TStrongObjectPtr<UUserInfoWidget>& UserInfoWidget) const;
 	void UpdateOfflineTimeUser(const FOnlineUserPresence& OnlineFriendPresence, const TStrongObjectPtr<UUserInfoWidget>& UserInfoWidget) const;
-	
+	void UpdatePresence(const FOnlineUserPresence& PresenceInfo, const TStrongObjectPtr<UUserInfoWidget>& UserInfoWidget) const;
+	void UpdateActivity(const TSharedPtr<FOnlineFriend>& OnlineFriend, const TStrongObjectPtr<UUserInfoWidget>& UserInfoWidget) const;
+	void OnQueryLocalPresenceComplete(const FUniqueNetId& UserId, const bool bWasSuccessful) const;
 public:
 	
 	
 	void UpdateLocalPlayer() const;
 	void UpdateUser(const TArray<TSharedRef<FOnlineFriend>>&);
+	void UpdateUser(const FUniqueNetId& UserId, const TSharedRef<FOnlineUserPresence>& Presence);
 	
 };

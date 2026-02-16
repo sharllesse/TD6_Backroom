@@ -7,6 +7,7 @@
 #include "Components/ScrollBox.h"
 #include "Interfaces/OnlinePresenceInterface.h"
 #include "Online/BROnlineGameTags.h"
+#include "Interfaces/OnlinePresenceInterface.h"
 #include "Online/BROnlineSubsystem.h"
 #include "UI/UIManagerSubsystem.h"
 #include "UI/UserInfoWidget.h"
@@ -25,23 +26,12 @@ void UFriendListWidget::UpdateUser(const TSharedPtr<FOnlineFriend>& OnlineFriend
 	const auto& PresenceInfo = OnlineFriend->GetPresence();
 	UserInfoWidget->SetActivity(PresenceInfo.Status.StatusStr);
 	UserInfoWidget->SetUserName(OnlineFriend->GetDisplayName());
+
+	UE_LOG(LogTemp, Error, TEXT("%s"), *PresenceInfo.ToDebugString());
 	
-	if (!PresenceInfo.bIsOnline)
-	{
-		UpdateOfflineTimeUser(PresenceInfo, UserInfoWidget);
-	}
-	else if (PresenceInfo.bIsOnline)
-	{
-		if (PresenceInfo.bIsPlayingThisGame || !PresenceInfo.Status.StatusStr.IsEmpty())
-		{
-			FString Status = FString::Printf(TEXT("Playing %s"), *PresenceInfo.Status.StatusStr);
-			UserInfoWidget->SetPresence(Status, FColor::Green);
-		}
-		else
-		{
-			UserInfoWidget->SetPresence(TEXT("Online"), FColor::Blue);
-		}
-	}
+	
+	UpdatePresence(OnlineFriend->GetPresence(), UserInfoWidget);
+	UpdateActivity(OnlineFriend, UserInfoWidget);
 	
 	UserInfoWidget->SetCanBeJoin(PresenceInfo.bIsJoinable);
 	UserInfoWidget->SetCanBeInvited(PresenceInfo.bIsPlayingThisGame);
@@ -84,12 +74,76 @@ void UFriendListWidget::UpdateOfflineTimeUser(const FOnlineUserPresence& OnlineF
 	UserInfoWidget->SetPresence(PresenceStatus, FColor::Red);
 }
 
+void UFriendListWidget::UpdatePresence(const FOnlineUserPresence& PresenceInfo,
+	const TStrongObjectPtr<UUserInfoWidget>& UserInfoWidget) const
+{
+	switch (PresenceInfo.Status.State) {
+	case EOnlinePresenceState::Online:
+		UserInfoWidget->SetPresence(TEXT("Online"), FColor::Green);
+		break;
+	case EOnlinePresenceState::Offline:
+		UpdateOfflineTimeUser(PresenceInfo, UserInfoWidget);
+		break;
+	case EOnlinePresenceState::Away:
+		UserInfoWidget->SetPresence(TEXT("Away"), FColor::Orange);
+		break;
+	case EOnlinePresenceState::ExtendedAway:
+		UserInfoWidget->SetPresence(TEXT("Away"), FColor::Orange);
+		break;
+	case EOnlinePresenceState::DoNotDisturb:
+		UserInfoWidget->SetPresence(TEXT("Do not disturb"), FColor::Red);
+		break;
+	case EOnlinePresenceState::Chat:
+		break;
+	}
+}
+
+void UFriendListWidget::UpdateActivity(const TSharedPtr<FOnlineFriend>& OnlineFriend,
+	const TStrongObjectPtr<UUserInfoWidget>& UserInfoWidget) const
+{
+	
+}
+
 void UFriendListWidget::UpdateLocalPlayer() const
-{	
+{
+
+	IOnlineSubsystem* OnlineSub = Online::GetSubsystem(GetWorld());
+	if (!OnlineSub) return;
+
+	IOnlineIdentityPtr IdentityInterface = OnlineSub->GetIdentityInterface();
+	IOnlinePresencePtr PresenceInterface = OnlineSub->GetPresenceInterface();
+	if (!IdentityInterface.IsValid() || !PresenceInterface.IsValid()) return;
+    
+	TSharedPtr<const FUniqueNetId> UserId = IdentityInterface->GetUniquePlayerId(0);
+	if (!UserId.IsValid()) return;
+
+	PresenceInterface->QueryPresence(*UserId, IOnlinePresence::FOnPresenceTaskCompleteDelegate::CreateUObject(
+		this, &UFriendListWidget::OnQueryLocalPresenceComplete));
+
+	
 	LocalPlayer->SetCanBeInvited(false);
 	LocalPlayer->SetCanBeJoin(false);
-	LocalPlayer->SetUserName(Online::GetIdentityInterface(GetWorld())->GetPlayerNickname(0));
+	LocalPlayer->SetUserName(IdentityInterface->GetPlayerNickname(0));
 }
+
+void UFriendListWidget::OnQueryLocalPresenceComplete(const FUniqueNetId& UserId, const bool bWasSuccessful) const
+{
+	if (!bWasSuccessful) return;
+
+	IOnlineSubsystem* OnlineSub = Online::GetSubsystem(GetWorld());
+	if (!OnlineSub) return;
+
+	IOnlinePresencePtr PresenceInterface = OnlineSub->GetPresenceInterface();
+	IOnlineIdentityPtr IdentityInterface = OnlineSub->GetIdentityInterface();
+	if (!PresenceInterface.IsValid() || !IdentityInterface.IsValid()) return;
+
+	TSharedPtr<FOnlineUserPresence> OutPresence;
+	if (PresenceInterface->GetCachedPresence(UserId, OutPresence) == EOnlineCachedResult::Success)
+	{
+		UpdatePresence(*OutPresence, TStrongObjectPtr<UUserInfoWidget>(LocalPlayer));
+	}
+}
+
 
 void UFriendListWidget::UpdateUser(const TArray<TSharedRef<FOnlineFriend>>& FriendList)
 {
@@ -114,4 +168,15 @@ void UFriendListWidget::UpdateUser(const TArray<TSharedRef<FOnlineFriend>>& Frie
 		UpdateUser(Friend.Key.Pin(), Friend.Value.Pin());
 	}
 	
+}
+
+void UFriendListWidget::UpdateUser(const FUniqueNetId& UserId, const TSharedRef<FOnlineUserPresence>& Presence)
+{
+	if(auto Friend = Online::GetFriendsInterface(GetWorld())->GetFriend(0,UserId, EFriendsLists::ToString(EFriendsLists::Default)))
+	{
+		if (FriendsMap.Contains(Friend))
+		{
+			UpdateUser(Friend, FriendsMap[Friend].Pin());
+		}
+	}
 }
