@@ -50,6 +50,10 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnSessionStartCompleted, "Online.
 								"A callback that notify when the session has started.\n"
 								"[Args: bool bWasSuccessful]")
 
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnSessionInviteReceived, "Online.Callback.OnSessionInviteReceived",
+								"A callback that notify when an invite is received from a friend.\n"
+								"[Args: const FUniqueNetId& UserId, const FUniqueNetId& FromId, const FString& AppId, const FOnlineSessionSearchResult& InviteResult]")
+
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnRefreshSessionTimerFinish, "Online.Callback.OnRefreshSessionTimerFinish",
 								"A callback made to notify when the refresh timer has finish.\n"
 								"[Args: ]")
@@ -66,5 +70,3 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnAvatarTextureRetrieved, "Online
 								"A callback that notify when the request to retrieved the avatar texture is a success or not.\n"
 								"Be aware that if the retrieve process failed, Texture is equal to nullptr.\n"
 								"[Args: UTexture2DDynamic* Texture, FUniqueNetIdWeakPtr UserId]")
-
-// UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnExternalUIChange, "Online.Callback.OnExternalUIChange", "")
