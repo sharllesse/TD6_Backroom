@@ -58,7 +58,6 @@ public:
 					Widget->AddToViewport();
 				});
 		
-		WidgetStack.Add(WidgetInstance);
 		return Cast<T>(WidgetInstance);
 	}
 	
@@ -106,7 +105,7 @@ public:
 		WidgetStack.Last()->RemoveFromParent();
 		WidgetStack.RemoveAt(WidgetStack.Num() - 1);
 
-		if (WidgetStack.IsEmpty())
+		if (!WidgetStack.IsEmpty())
 		{
 			WidgetStack.Last()->SetVisibility(ESlateVisibility::Visible);
 		}

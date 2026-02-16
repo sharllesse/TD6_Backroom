@@ -30,7 +30,6 @@ void ABRPlayerController::BeginPlay()
 
 		SetInputMode(FInputModeUIOnly());
 		bShowMouseCursor = true;
-		CreateRoomWidget = GetLocalPlayer()->GetSubsystem<UUIManagerSubsystem>()->PushMenu<UCreateRoomWidget>();
 	});
 	
 	UEventBus::AddLambda(this, Online_Callback_OnReadFriendsListCompleted,

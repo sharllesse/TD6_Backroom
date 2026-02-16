@@ -43,9 +43,6 @@ protected:
 	TArray<FAction> InputActions;
 
 	TWeakObjectPtr<ABRPlayerCharacter> OwningCharacter;
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<UMainMenuWidget> MainMenuClass;
 	
 	UPROPERTY()
 	TObjectPtr<UMainMenuWidget> MainMenu;
