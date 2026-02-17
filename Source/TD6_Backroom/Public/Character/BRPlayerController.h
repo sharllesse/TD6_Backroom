@@ -50,6 +50,8 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UCreateRoomWidget> CreateRoomWidget;
 
+	TMap<FGameplayTag, FDelegateHandle> DelegateHandles;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;

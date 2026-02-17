@@ -614,6 +614,7 @@ void UBROnlineSubsystem::Internal_RegisterDelegates()
 
 		SessionInterface->AddOnSessionInviteReceivedDelegate_Handle(
 			FOnSessionInviteReceivedDelegate::CreateUObject(this, &UBROnlineSubsystem::OnSessionInviteReceived));
+
 	}, Online::GetSessionInterface(World));
 
 	Internal_ExecuteOnValidContext([this](const IOnlinePresencePtr& PresenceInterface)
