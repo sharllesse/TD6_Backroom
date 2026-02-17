@@ -25,7 +25,9 @@ void URoomInfoWidget::NativeConstruct()
 
 void URoomInfoWidget::SetupRoomInfo(const FOnlineSessionSearchResult& SessionSearchResult)
 {
-	RoomName->SetText(FText::FromString(SessionSearchResult.GetSessionIdStr()));
+	FString SessionName;
+	SessionSearchResult.Session.SessionSettings.Get(Online_Settings_Session_Name, SessionName);
+	RoomName->SetText(FText::FromString(SessionName));
 	RoomOwner->SetText(FText::FromString(SessionSearchResult.Session.OwningUserName));
 	int MaxPlayer = SessionSearchResult.Session.SessionSettings.NumPublicConnections;
 	int CurrentPlayer = FMath::Abs(SessionSearchResult.Session.NumOpenPublicConnections - MaxPlayer);

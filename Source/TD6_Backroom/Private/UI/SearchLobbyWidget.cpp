@@ -33,12 +33,9 @@ void USearchLobbyWidget::OnSessionsFind(const TArray<FOnlineSessionSearchResult>
 	if (!bWasSuccessful)
 		return;
 
-	RoomsInfo.RemoveAll([](TStrongObjectPtr<URoomInfoWidget> InfoWidget)
-	{
-		InfoWidget->GetParent()->RemoveFromParent();
-		InfoWidget->RemoveFromParent();
-		return true;
-	});
+	RoomScrollBox->ClearChildren();	
+	RoomsInfo.Empty();
+	Test.Empty();
 
 	for (const auto& Session : SessionsResult)
 	{
@@ -51,30 +48,26 @@ void USearchLobbyWidget::OnSessionsFind(const TArray<FOnlineSessionSearchResult>
 
 void USearchLobbyWidget::SetupNewSession(const FOnlineSessionSearchResult& SessionResult)
 {
-	auto SizeBox = WidgetTree->ConstructWidget<USizeBox>();
-	SizeBox->SetMinDesiredHeight(100);
-	auto ScrollBoxSlot = Cast<UScrollBoxSlot>(RoomScrollBox->AddChild(SizeBox));
+	auto RoomInfo = Chain::StartChain(GetOwningLocalPlayer())
+		.Transform([](const ULocalPlayer* LocalPlayer)
+		{
+			return LocalPlayer->GetSubsystem<UUIManagerSubsystem>();
+		})
+		.Transform([](UUIManagerSubsystem* UIManager)
+		{
+			return UIManager->CreateWidget<URoomInfoWidget>(true);
+		});
+
+	RoomsInfo.Add(TStrongObjectPtr(RoomInfo.Get()));
+	
+	
+	auto ScrollBoxSlot = Cast<UScrollBoxSlot>(RoomScrollBox->AddChild(RoomInfo));
 	ScrollBoxSlot->SetHorizontalAlignment(HAlign_Fill);
 	ScrollBoxSlot->SetVerticalAlignment(VAlign_Fill);
 	ScrollBoxSlot->SetSize(ESlateSizeRule::Automatic);
 
-	auto RoomInfo = Chain::StartChain(GetOwningLocalPlayer())
-	.Transform([](const ULocalPlayer* LocalPlayer)
-	{
-		return LocalPlayer->GetSubsystem<UUIManagerSubsystem>();
-	})
-	.Transform([](UUIManagerSubsystem* UIManager)
-	{
-		return UIManager->PushMenu<URoomInfoWidget>();
-	});
-	
-	auto SizeBoxSlot = Cast<USizeBoxSlot>(SizeBox->AddChild(RoomInfo));
-	SizeBoxSlot->SetHorizontalAlignment(HAlign_Fill);
-	SizeBoxSlot->SetVerticalAlignment(VAlign_Fill);
-
-
+		
 	RoomInfo->SetupRoomInfo(SessionResult);
-	RoomsInfo.Add(TStrongObjectPtr(RoomInfo.Get()));
 }
 
 

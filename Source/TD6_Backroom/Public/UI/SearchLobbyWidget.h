@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "SearchLobbyWidget.generated.h"
 
+class USizeBox;
 class URoomInfoWidget;
 class UScrollBox;
 class UEditableTextBox;
@@ -30,6 +31,7 @@ protected:
 	TObjectPtr<UScrollBox> RoomScrollBox;
 
 	TArray<TStrongObjectPtr<URoomInfoWidget>> RoomsInfo;
+	TArray<TStrongObjectPtr<USizeBox>> Test;
 	
 	UFUNCTION()
 	void PopThisMenu();
