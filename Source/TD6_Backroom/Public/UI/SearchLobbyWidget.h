@@ -31,7 +31,6 @@ protected:
 	TObjectPtr<UScrollBox> RoomScrollBox;
 
 	TArray<TStrongObjectPtr<URoomInfoWidget>> RoomsInfo;
-	TArray<TStrongObjectPtr<USizeBox>> Test;
 	
 	UFUNCTION()
 	void PopThisMenu();
@@ -41,6 +40,8 @@ protected:
 	void OnSessionsFind(const TArray<FOnlineSessionSearchResult>& SessionsResult, bool bWasSuccessful);
 
 	void SetupNewSession(const FOnlineSessionSearchResult& SessionResult);
+
+	virtual void NativeDestruct() override;
 	
 public:
 	virtual void NativeConstruct() override;

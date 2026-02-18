@@ -266,10 +266,10 @@ void UBROnlineSubsystem::OnLoginStatusChanged(int32 LocalUserNum, ELoginStatus::
 	(this, Online_Callback_OnLoginStatusChanged, LocalUserNum, OldStatus, NewStatus, NewId);
 }
 
-void UBROnlineSubsystem::OnCreateSessionCompleted(FName, bool bWasSuccessful)
+void UBROnlineSubsystem::OnCreateSessionCompleted(FName InSessionName, bool bWasSuccessful)
 {
 	if (Internal_ExecuteOnValidContext(
-		[this, bWasSuccessful](const TSharedPtr<FOnlineSessionSettings>& OnlineSessionSettings)
+		[this, bWasSuccessful, InSessionName](const TSharedPtr<FOnlineSessionSettings>& OnlineSessionSettings)
 		{
 			FString SessionName;
 			if (!OnlineSessionSettings->Get(Online_Settings_Session_Name, SessionName))
@@ -285,6 +285,8 @@ void UBROnlineSubsystem::OnCreateSessionCompleted(FName, bool bWasSuccessful)
 			{
 				ONLINE_LOG(Log, TEXT("Session: Creation of the session [Name: %s] was a success."), *SessionName)
 			}
+			Online::GetSessionInterface(GetWorld())->RegisterPlayer(
+				InSessionName, *Online::GetIdentityInterface(GetWorld())->GetUniquePlayerId(0), false);
 			
 			UEventBus::Broadcast<const FString&>(this, Online_Callback_OnCreateSessionCompleted,
 				SessionName, TWeakPtr<const FOnlineSessionSettings>{ OnlineSessionSettings }, bWasSuccessful);
@@ -394,6 +396,8 @@ void UBROnlineSubsystem::OnFindSessionsCompleted(bool bWasSuccessful)
 			UEventBus::Broadcast<const TArray<FOnlineSessionSearchResult>&>(
 				this, Online_Callback_OnFindSessionsCompleted, SearchResults, bWasSuccessful);
 		}, OnlineData.CurrentSearchedSessionSettings);
+
+		return;
 	}
 
 	UEventBus::Broadcast<const TArray<FOnlineSessionSearchResult>&>(

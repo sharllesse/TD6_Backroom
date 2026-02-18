@@ -33,9 +33,10 @@ void USearchLobbyWidget::OnSessionsFind(const TArray<FOnlineSessionSearchResult>
 	if (!bWasSuccessful)
 		return;
 
-	RoomScrollBox->ClearChildren();	
+	UE_LOG(LogTemp, Error, TEXT("On session Find"));
+	
 	RoomsInfo.Empty();
-	Test.Empty();
+	RoomScrollBox->ClearChildren();	
 
 	for (const auto& Session : SessionsResult)
 	{
@@ -55,19 +56,34 @@ void USearchLobbyWidget::SetupNewSession(const FOnlineSessionSearchResult& Sessi
 		})
 		.Transform([](UUIManagerSubsystem* UIManager)
 		{
-			return UIManager->CreateWidget<URoomInfoWidget>(true);
+			return UIManager->CreateWidget<URoomInfoWidget>(false);
 		});
 
+	auto SizeBox = WidgetTree->ConstructWidget<USizeBox>();
+	SizeBox->SetMinDesiredHeight(100.f);
+	SizeBox->AddChild(RoomInfo);
+	
 	RoomsInfo.Add(TStrongObjectPtr(RoomInfo.Get()));
 	
 	
-	auto ScrollBoxSlot = Cast<UScrollBoxSlot>(RoomScrollBox->AddChild(RoomInfo));
+	auto ScrollBoxSlot = Cast<UScrollBoxSlot>(RoomScrollBox->AddChild(SizeBox));
 	ScrollBoxSlot->SetHorizontalAlignment(HAlign_Fill);
 	ScrollBoxSlot->SetVerticalAlignment(VAlign_Fill);
 	ScrollBoxSlot->SetSize(ESlateSizeRule::Automatic);
 
 		
 	RoomInfo->SetupRoomInfo(SessionResult);
+}
+
+void USearchLobbyWidget::NativeDestruct()
+{
+	Super::NativeDestruct();
+	RoomsInfo.Empty();
+	Chain::Execute(UBROnlineSubsystem::Get(GetWorld()), [](UBROnlineSubsystem* Subsystem)
+	{
+		Subsystem->StopRefreshSessionTimer();
+	});
+	UEventBus::Remove(this, Online_Callback_OnFindSessionsCompleted, FindSessionDelegateHandle);
 }
 
 
@@ -84,8 +100,7 @@ void USearchLobbyWidget::NativeConstruct()
 	
 	Chain::StartChain(UBROnlineSubsystem::Get(GetWorld()))
 	.Execute([](UBROnlineSubsystem* Subsystem)
-	{
-		Subsystem->FindSessions();
+	{ 
 		Subsystem->LaunchRefreshSessionsTimer(10.f);
 	});
 }
