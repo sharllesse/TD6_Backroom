@@ -46,6 +46,9 @@ protected:
 
 	UFUNCTION()
 	void CreateSession();
+
+	UFUNCTION()
+	void OnRoomNameChange(const FText& Text);
 public:
 
 	virtual void NativeConstruct() override;

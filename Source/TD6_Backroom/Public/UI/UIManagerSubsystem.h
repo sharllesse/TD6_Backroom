@@ -40,7 +40,7 @@ public:
 	
 	template<typename T>
 	requires std::is_base_of_v<UUserWidget, T>
-	T* CreateWidget()
+	T* CreateWidget(bool bAddToViewport = true)
 	{
 		auto NewWidget = Linq::Start(ManagerData->WidgetList).First([](const TSubclassOf<UUserWidget>& Widget)
 		{
@@ -53,10 +53,13 @@ public:
 		}
 		
 		auto WidgetInstance = ::CreateWidget(GetLocalPlayer()->GetPlayerController(GetWorld()), *NewWidget);
-		Chain::Execute(WidgetInstance,[](UUserWidget* Widget)
-				{
-					Widget->AddToViewport();
-				});
+		if (bAddToViewport)
+		{
+			Chain::Execute(WidgetInstance,[](UUserWidget* Widget)
+				   {
+					   Widget->AddToViewport();
+				   });
+		}
 		
 		return Cast<T>(WidgetInstance);
 	}

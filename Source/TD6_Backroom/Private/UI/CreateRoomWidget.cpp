@@ -30,11 +30,36 @@ void UCreateRoomWidget::CreateSession()
 	});
 }
 
+void UCreateRoomWidget::OnRoomNameChange(const FText& Text)
+{
+	if (Text.IsEmpty())
+	{
+		Chain::Execute(CreateRoom.Get(), [](UButton* Button)
+		{
+			Button->SetVisibility(ESlateVisibility::Collapsed);
+		});
+	}
+	else
+	{
+		Chain::Execute(CreateRoom.Get(), [](UButton* Button)
+		{
+			Button->SetVisibility(ESlateVisibility::Visible);
+		});
+	}
+}
+
+
 void UCreateRoomWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	Slider->OnValueChanged.AddDynamic(this, &UCreateRoomWidget::UpdateTextSlider);
-	BackButton->OnClicked.AddDynamic(this, &UCreateRoomWidget::PopThisMenu);
-	CreateRoom->OnClicked.AddDynamic(this, &UCreateRoomWidget::UCreateRoomWidget::CreateSession);
+	Slider->OnValueChanged.AddDynamic(this, &ThisClass::UpdateTextSlider);
+	BackButton->OnClicked.AddDynamic(this, &ThisClass::PopThisMenu);
+	CreateRoom->OnClicked.AddDynamic(this, &ThisClass::CreateSession);
+	RoomName->OnTextChanged.AddDynamic(this, &ThisClass::OnRoomNameChange);
+	
+	Chain::Execute(CreateRoom.Get(), [](UButton* Button)
+		{
+			Button->SetVisibility(ESlateVisibility::Collapsed);
+		});
 }

@@ -71,7 +71,6 @@ int32 UEventBus::RemoveAll(const UObject* WorldContext, const FGameplayTag& Game
 			{
 				EventBus->Internal_Remove(GameplayTag);
 			}
-		
 			return RemovedSubscriber;            	
 		}
 

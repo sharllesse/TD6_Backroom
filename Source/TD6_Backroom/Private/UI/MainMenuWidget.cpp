@@ -5,6 +5,7 @@
 
 #include "Components/Button.h"
 #include "UI/CreateRoomWidget.h"
+#include "UI/SearchLobbyWidget.h"
 #include "UI/UIManagerSubsystem.h"
 
 void UMainMenuWidget::OnCreateRoomClicked()
@@ -20,9 +21,23 @@ void UMainMenuWidget::OnCreateRoomClicked()
 	});	
 }
 
+void UMainMenuWidget::OnJoinRoomClicked()
+{
+	Chain::StartChain(GetOwningLocalPlayer())
+	.Transform([](const ULocalPlayer* LocalPlayer)
+	{
+		return LocalPlayer->GetSubsystem<UUIManagerSubsystem>();
+	})
+	.Execute([](UUIManagerSubsystem* UIManager)
+	{
+		UIManager->PushMenu<USearchLobbyWidget>();
+	});	
+}
+
 void UMainMenuWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
 	CreateRoomButton->OnClicked.AddDynamic(this, &UMainMenuWidget::OnCreateRoomClicked);
+	JoinRoomButton->OnClicked.AddDynamic(this, &UMainMenuWidget::OnJoinRoomClicked);
 }

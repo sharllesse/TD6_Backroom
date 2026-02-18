@@ -16,37 +16,89 @@
 void ABRPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-
-	MainMenu = GetLocalPlayer()->GetSubsystem<UUIManagerSubsystem>()->PushMenu<UMainMenuWidget>();
-
-	UEventBus::AddLambda(this, Online_Callback_OnLoginComplete, [&]( int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
+	
+	MainMenu = Chain::StartChain(GetLocalPlayer())
+	.Transform([](ULocalPlayer* LocalPlayer)
 	{
-		auto OnlineSubsystem = GetGameInstance()->GetSubsystem<UBROnlineSubsystem>();
-		OnlineSubsystem->QueryFriendList();
-		Chain::Execute(MainMenu.Get(), [](UMainMenuWidget* Widget)
+		return LocalPlayer->GetSubsystem<UUIManagerSubsystem>();
+	})
+	.Transform([](UUIManagerSubsystem* UIManager)
+	{
+		return UIManager->PushMenu<UMainMenuWidget>();
+	});
+
+	auto Handle = UEventBus::AddLambda(this, Online_Callback_OnLoginComplete, [&]( int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
+	{
+		Chain::StartChain(GetGameInstance())
+		.Transform([](const UGameInstance* GameInstance)
 		{
-			Widget->FriendList->UpdateLocalPlayer();
-		});
+			return GameInstance->GetSubsystem<UBROnlineSubsystem>();
+		})
+		.Execute(&UBROnlineSubsystem::QueryFriendList);
+		
+		Chain::StartChain(MainMenu.Get())
+		.Transform([](UMainMenuWidget* Widget)
+		{
+			return Widget->FriendList.Get();
+		})
+		.Execute(&UFriendListWidget::UpdateLocalPlayer);
 
 		SetInputMode(FInputModeUIOnly());
 		bShowMouseCursor = true;
 	});
+	DelegateHandles.Add(Online_Callback_OnLoginComplete, Handle);
 	
-	UEventBus::AddLambda(this, Online_Callback_OnReadFriendsListCompleted,
+	Handle = UEventBus::AddLambda(this, Online_Callback_OnReadFriendsListCompleted,
 		[&](int32 LocalUserNum, bool bWasSuccessful, const TArray<TSharedRef<FOnlineFriend>>& OnlineFriends, const FString& ErrorStr)
 	{
 		if (bWasSuccessful)
 		{
-			MainMenu->FriendList->UpdateUser(OnlineFriends);
+			Chain::StartChain(MainMenu.Get())
+			.Transform([](UMainMenuWidget* Widget)
+			{
+				return Widget->FriendList.Get();
+			})
+			.Execute([&](UFriendListWidget* FriendListWidget)
+			{
+				FriendListWidget->UpdateUser(OnlineFriends);
+			});
 		}
 	});
+	DelegateHandles.Add(Online_Callback_OnReadFriendsListCompleted, Handle);
 	
-	
-	UEventBus::AddLambda(this, Online_Callback_OnPresenceReceived,
+	Handle = UEventBus::AddLambda(this, Online_Callback_OnPresenceReceived,
 		[&](const FUniqueNetId& UserId, const TSharedRef<FOnlineUserPresence>& Presence)
+	{
+		Chain::StartChain(MainMenu.Get())
+		.Transform([](UMainMenuWidget* Widget)
 		{
-			MainMenu->FriendList->UpdateUser(UserId, Presence);
+			return Widget->FriendList.Get();
+		})
+		.Execute([&](UFriendListWidget* FriendListWidget)
+		{
+			FriendListWidget->UpdateUser(UserId, Presence);
 		});
+	});
+
+	DelegateHandles.Add(Online_Callback_OnPresenceReceived, Handle);
+	
+
+	if (Online::GetIdentityInterface(GetWorld())->GetLoginStatus(0) == ELoginStatus::LoggedIn)
+	{
+		Chain::StartChain(GetGameInstance())
+		.Transform([](const UGameInstance* GameInstance)
+		{
+			return GameInstance->GetSubsystem<UBROnlineSubsystem>();
+		})
+		.Execute(&UBROnlineSubsystem::QueryFriendList);
+
+		Chain::StartChain(MainMenu.Get())
+		.Transform([](UMainMenuWidget* Widget)
+		{
+			return Widget->FriendList.Get();
+		})
+		.Execute(&UFriendListWidget::UpdateLocalPlayer);
+	}
 	
 	
 	//UEventBus::AddUObject(this, Online_Callback_OnExternalUIChange, this, &ABRPlayerController::OnExternalUIChange);
@@ -56,9 +108,10 @@ void ABRPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 
-	UEventBus::RemoveAll(this, Online_Callback_OnPresenceReceived, this);
-	UEventBus::RemoveAll(this, Online_Callback_OnReadFriendsListCompleted, this);
-	UEventBus::RemoveAll(this, Online_Callback_OnLoginComplete, this);
+	for (const auto& Element : DelegateHandles)
+	{
+		UEventBus::Remove(this, Element.Key, Element.Value);
+	}
 }
 
 void ABRPlayerController::SetupInputComponent()

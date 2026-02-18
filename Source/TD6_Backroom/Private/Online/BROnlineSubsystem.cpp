@@ -56,7 +56,8 @@ bool UBROnlineSubsystem::Login(bool bUseCommandLine, const FOnlineAccountCredent
 		if (bUseCommandLine)
 		{
 			FString AuthType;
-			FParse::Value(FCommandLine::Get(), TEXT("AUTH_TYPE="), AuthType);
+			auto F = FCommandLine::Get();
+			FParse::Value(F, TEXT("AUTH_TYPE="), AuthType);
 			if (!AuthType.IsEmpty())
 			{
 				ONLINE_LOG(
@@ -266,10 +267,10 @@ void UBROnlineSubsystem::OnLoginStatusChanged(int32 LocalUserNum, ELoginStatus::
 	(this, Online_Callback_OnLoginStatusChanged, LocalUserNum, OldStatus, NewStatus, NewId);
 }
 
-void UBROnlineSubsystem::OnCreateSessionCompleted(FName, bool bWasSuccessful)
+void UBROnlineSubsystem::OnCreateSessionCompleted(FName InSessionName, bool bWasSuccessful)
 {
 	if (Internal_ExecuteOnValidContext(
-		[this, bWasSuccessful](const TSharedPtr<FOnlineSessionSettings>& OnlineSessionSettings)
+		[this, bWasSuccessful, InSessionName](const TSharedPtr<FOnlineSessionSettings>& OnlineSessionSettings)
 		{
 			FString SessionName;
 			if (!OnlineSessionSettings->Get(Online_Settings_Session_Name, SessionName))
@@ -285,6 +286,8 @@ void UBROnlineSubsystem::OnCreateSessionCompleted(FName, bool bWasSuccessful)
 			{
 				ONLINE_LOG(Log, TEXT("Session: Creation of the session [Name: %s] was a success."), *SessionName)
 			}
+			Online::GetSessionInterface(GetWorld())->RegisterPlayer(
+				InSessionName, *Online::GetIdentityInterface(GetWorld())->GetUniquePlayerId(0), false);
 			
 			UEventBus::Broadcast<const FString&>(this, Online_Callback_OnCreateSessionCompleted,
 				SessionName, TWeakPtr<const FOnlineSessionSettings>{ OnlineSessionSettings }, bWasSuccessful);
@@ -394,6 +397,8 @@ void UBROnlineSubsystem::OnFindSessionsCompleted(bool bWasSuccessful)
 			UEventBus::Broadcast<const TArray<FOnlineSessionSearchResult>&>(
 				this, Online_Callback_OnFindSessionsCompleted, SearchResults, bWasSuccessful);
 		}, OnlineData.CurrentSearchedSessionSettings);
+
+		return;
 	}
 
 	UEventBus::Broadcast<const TArray<FOnlineSessionSearchResult>&>(
@@ -614,6 +619,7 @@ void UBROnlineSubsystem::Internal_RegisterDelegates()
 
 		SessionInterface->AddOnSessionInviteReceivedDelegate_Handle(
 			FOnSessionInviteReceivedDelegate::CreateUObject(this, &UBROnlineSubsystem::OnSessionInviteReceived));
+
 	}, Online::GetSessionInterface(World));
 
 	Internal_ExecuteOnValidContext([this](const IOnlinePresencePtr& PresenceInterface)

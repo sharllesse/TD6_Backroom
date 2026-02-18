@@ -19,9 +19,14 @@ class TD6_BACKROOM_API UMainMenuWidget : public UUserWidget
 	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UButton> CreateRoomButton;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UButton> JoinRoomButton;
 
 	UFUNCTION()
 	void OnCreateRoomClicked();
+	UFUNCTION()
+	void OnJoinRoomClicked();
 public:
 
 	UPROPERTY(meta = (BindWidget))
