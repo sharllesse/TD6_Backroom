@@ -124,6 +124,7 @@ void UFriendListWidget::UpdateLocalPlayer() const
 	LocalPlayer->SetCanBeInvited(false);
 	LocalPlayer->SetCanBeJoin(false);
 	LocalPlayer->SetUserName(IdentityInterface->GetPlayerNickname(0));
+	LocalPlayer->SetActivity("");
 }
 
 void UFriendListWidget::OnQueryLocalPresenceComplete(const FUniqueNetId& UserId, const bool bWasSuccessful) const
@@ -144,6 +145,13 @@ void UFriendListWidget::OnQueryLocalPresenceComplete(const FUniqueNetId& UserId,
 	}
 }
 
+void UFriendListWidget::NativeDestruct()
+{
+	Super::NativeDestruct();
+
+	FriendsMap.Empty();
+}
+
 
 void UFriendListWidget::UpdateUser(const TArray<TSharedRef<FOnlineFriend>>& FriendList)
 {
@@ -152,20 +160,23 @@ void UFriendListWidget::UpdateUser(const TArray<TSharedRef<FOnlineFriend>>& Frie
 	{
 		return;
 	}
+
+	for (auto Friend : FriendsMap)
+	{
+		Friend.Value->RemoveFromParent();
+	}
+	FriendsMap.Empty();
 	
 	for (auto Friend : FriendList)
 	{
-		if (!FriendsMap.Contains(Friend.ToWeakPtr()))
-		{
 			UUserInfoWidget* UserInfoWidget = UIManagerSubsystem->CreateWidget<UUserInfoWidget>();
 			FriendListBox->AddChild(UserInfoWidget);
-			FriendsMap.Add(Friend.ToWeakPtr(),UserInfoWidget);
-		}
+			FriendsMap.Add(Friend.ToSharedPtr(), TStrongObjectPtr(UserInfoWidget));
 	}
 
 	for (auto Friend : FriendsMap)
 	{
-		UpdateUser(Friend.Key.Pin(), Friend.Value.Pin());
+		UpdateUser(Friend.Key, Friend.Value);
 	}
 	
 }
@@ -176,7 +187,7 @@ void UFriendListWidget::UpdateUser(const FUniqueNetId& UserId, const TSharedRef<
 	{
 		if (FriendsMap.Contains(Friend))
 		{
-			UpdateUser(Friend, FriendsMap[Friend].Pin());
+			UpdateUser(Friend, FriendsMap[Friend]);
 		}
 	}
 }

@@ -24,14 +24,16 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UScrollBox> FriendListBox;
-	 
-	TMap<TWeakPtr<FOnlineFriend>, TWeakObjectPtr<UUserInfoWidget>> FriendsMap;
+
+	TMap<TSharedPtr<FOnlineFriend>, TStrongObjectPtr<UUserInfoWidget>> FriendsMap;
 
 	void UpdateUser(const TSharedPtr<FOnlineFriend>& OnlineFriend, const TStrongObjectPtr<UUserInfoWidget>& UserInfoWidget) const;
 	void UpdateOfflineTimeUser(const FOnlineUserPresence& OnlineFriendPresence, const TStrongObjectPtr<UUserInfoWidget>& UserInfoWidget) const;
 	void UpdatePresence(const FOnlineUserPresence& PresenceInfo, const TStrongObjectPtr<UUserInfoWidget>& UserInfoWidget) const;
 	void UpdateActivity(const TSharedPtr<FOnlineFriend>& OnlineFriend, const TStrongObjectPtr<UUserInfoWidget>& UserInfoWidget) const;
 	void OnQueryLocalPresenceComplete(const FUniqueNetId& UserId, const bool bWasSuccessful) const;
+
+	virtual void NativeDestruct() override;
 public:
 	
 	
