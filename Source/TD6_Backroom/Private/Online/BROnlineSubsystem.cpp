@@ -56,7 +56,8 @@ bool UBROnlineSubsystem::Login(bool bUseCommandLine, const FOnlineAccountCredent
 		if (bUseCommandLine)
 		{
 			FString AuthType;
-			FParse::Value(FCommandLine::Get(), TEXT("AUTH_TYPE="), AuthType);
+			auto F = FCommandLine::Get();
+			FParse::Value(F, TEXT("AUTH_TYPE="), AuthType);
 			if (!AuthType.IsEmpty())
 			{
 				ONLINE_LOG(
