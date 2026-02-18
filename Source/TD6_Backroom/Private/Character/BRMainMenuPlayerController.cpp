@@ -10,7 +10,6 @@
 #include "Online/BROnlineSubsystem.h"
 #include "UI/UIManagerSubsystem.h"
 #include "UI/MainMenuWidget.h"
-#include "UI/FriendListWidget.h"
 
 void ABRMainMenuPlayerController::BeginPlay()
 {
