@@ -425,7 +425,7 @@ void UBROnlineSubsystem::OnJoinSessionCompleted(FName SessionName, EOnJoinSessio
 			{
 				if (APlayerController* Controller{ GetWorld()->GetFirstPlayerController() })
 				{
-					Controller->ClientTravel(ConnectionInfo, TRAVEL_Relative, true);
+					Controller->ClientTravel(ConnectionInfo, TRAVEL_Absolute);
 				}
 			}
 		}, Online::GetSessionInterface(GetWorld()), Online::GetExternalUIInterface(GetWorld()));
