@@ -35,6 +35,11 @@ protected:
 	void OnJoinButtonClicked();
 
 	FOnlineSessionSearchResult SessionInfo;
+
+	FDelegateHandle OnJoinCompletedHandle;
+
+	virtual void NativeDestruct() override;
+	
 public:
 	virtual void NativeConstruct() override;
 

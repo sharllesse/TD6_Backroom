@@ -18,7 +18,7 @@ void ABRPlayerController::BeginPlay()
 	Super::BeginPlay();
 	
 	SetInputMode(FInputModeGameOnly());
-	bShowMouseCursor = true;
+	bShowMouseCursor = true; 
 	
 	//UEventBus::AddUObject(this, Online_Callback_OnExternalUIChange, this, &ABRPlayerController::OnExternalUIChange);
 }

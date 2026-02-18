@@ -119,7 +119,7 @@ bool UBROnlineSubsystem::CreateSession(int32 SessionMaxConnections, const FStrin
 		OnlineSessionSettings.bUseLobbiesIfAvailable = true;
 		OnlineSessionSettings.Set(Online_Settings_Session_Name, SessionName, EOnlineDataAdvertisementType::ViaOnlineService);
 		OnlineSessionSettings.Set(SETTING_ACTIVITY_SESSION, true, EOnlineDataAdvertisementType::ViaOnlineService);
-		OnlineSessionSettings.Set(SETTING_MULTIPLAYER_VISIBILITY, 0, EOnlineDataAdvertisementType::ViaOnlineService);
+		OnlineSessionSettings.Set(SETTING_MULTIPLAYER_VISIBILITY, 1, EOnlineDataAdvertisementType::ViaOnlineService);
 
 		constexpr int32 MinimumConnections{ 1 };
 		SessionMaxConnections = FMath::Clamp(SessionMaxConnections, MinimumConnections, MaxSessionConnections);
@@ -282,7 +282,8 @@ void UBROnlineSubsystem::OnCreateSessionCompleted(FName SessionName, bool bWasSu
 	[this, bWasSuccessful, SessionName]
 	(const TSharedPtr<FOnlineSessionSettings>& OnlineSessionSettings,
 	const IOnlinePresencePtr& PresenceInterface,
-	const IOnlineIdentityPtr& IdentityInterface)
+	const IOnlineIdentityPtr& IdentityInterface,
+	const IOnlineSessionPtr& SessionInterface)
 	{
 		FString SettingsSessionName;
 		if (!OnlineSessionSettings->Get(Online_Settings_Session_Name, SettingsSessionName))
@@ -299,14 +300,11 @@ void UBROnlineSubsystem::OnCreateSessionCompleted(FName SessionName, bool bWasSu
 			ONLINE_LOG(Error, TEXT("Session: Creation of the session [Name: %s] has failed."), *SettingsSessionName)
 			return;
 		}
+
+		SessionInterface->StartSession(SessionName);
 		
 		ONLINE_LOG(Log, TEXT("Session: Creation of the session [Name: %s] was a success."), *SettingsSessionName)
 
-		// auto& LocalId{ *IdentityInterface->GetUniquePlayerId(0) };
-		// FOnlineUserPresenceStatus NewStatus;
-		// NewStatus.State = EOnlinePresenceState::Online;
-		// NewStatus.StatusStr = TEXT("Waiting in lobby");
-		// PresenceInterface->SetPresence(LocalId, NewStatus);
 		
 		UEventBus::Broadcast<const FString&>(this, Online_Callback_OnCreateSessionCompleted,
 			SettingsSessionName, TWeakPtr<const FOnlineSessionSettings>{ OnlineSessionSettings }, bWasSuccessful);
@@ -315,11 +313,12 @@ void UBROnlineSubsystem::OnCreateSessionCompleted(FName SessionName, bool bWasSu
 		{
 			const FName LoadedMapPath{ UBROnlineSettings::Get()->LoadedMapOnSessionCreation.GetLongPackageName() };
 			const FString& LoadedMapOptions{ UBROnlineSettings::Get()->LoadedMapOptionsOnSessionCreation };
-			UGameplayStatics::OpenLevel(this, LoadedMapPath, true, TEXT("?listen"));
+			UGameplayStatics::OpenLevel(this, LoadedMapPath, true, LoadedMapOptions);
 		}
 	}, OnlineData.CurrentOnlineSessionSettings,
 	Online::GetPresenceInterface(World),
-	Online::GetIdentityInterface(World));
+	Online::GetIdentityInterface(World),
+	Online::GetSessionInterface(World));
 }
 
 void UBROnlineSubsystem::OnDestroySessionRequested(int32 LocalUserNum, FName)
@@ -584,6 +583,38 @@ void UBROnlineSubsystem::OnFriendRemoved(const FUniqueNetId& UserId, const FUniq
 void UBROnlineSubsystem::OnInviteAccepted(const FUniqueNetId& UserId, const FUniqueNetId& FriendId)
 {
 	QueryFriendList();
+}
+
+void UBROnlineSubsystem::UpdatePresence(EOnlinePresenceState::Type State, const FString& StatusText, bool bIsJoinable) const
+{
+	const UWorld* World{ GetWorld() };
+
+	return Internal_ExecuteOnValidContext(
+	[this, State, &StatusText, bIsJoinable]
+	(const IOnlinePresencePtr& PresenceInterface, const IOnlineIdentityPtr& IdentityInterface)
+	{
+		const FUniqueNetIdPtr UniquePlayerId{ IdentityInterface->GetUniquePlayerId(0) };
+		if (!UniquePlayerId || !UniquePlayerId->IsValid())
+		{
+			ONLINE_LOG(Error, TEXT("Presence: Cannot update presence, local player id is invalid."))
+		}
+
+		FOnlineUserPresenceStatus NewStatus;
+		NewStatus.State  = State;
+		NewStatus.StatusStr = StatusText;
+		NewStatus.Properties.Add(TEXT("Joinable"), bIsJoinable);
+
+		PresenceInterface->SetPresence(*UniquePlayerId, NewStatus,
+			IOnlinePresence::FOnPresenceTaskCompleteDelegate::CreateLambda(
+			[this](const FUniqueNetId& UserId, const bool bWasSuccessful)
+			{
+				if (!bWasSuccessful)
+				{
+					ONLINE_LOG(Error, TEXT("Presence: Failed to update presence for user [%s]"), *UserId.ToString())
+				}
+			}));
+
+	}, Online::GetPresenceInterface(World), Online::GetIdentityInterface(World));
 }
 
 void UBROnlineSubsystem::Internal_RegisterDelegates()

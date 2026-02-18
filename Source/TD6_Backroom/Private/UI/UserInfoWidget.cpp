@@ -57,7 +57,7 @@ void UUserInfoWidget::SetCanBeJoin(bool bCanJoin) const
 {
 	if (bCanJoin)
 	{
-		JoinButton->SetVisibility(ESlateVisibility::Collapsed);
+		JoinButton->SetVisibility(ESlateVisibility::Visible);
 	}
 	else
 	{
@@ -69,7 +69,7 @@ void UUserInfoWidget::SetCanBeInvited(bool bCanInvite) const
 {
 	if (bCanInvite)
 	{
-		InviteButton->SetVisibility(ESlateVisibility::Collapsed);
+		InviteButton->SetVisibility(ESlateVisibility::Visible);
 	}
 	else
 	{

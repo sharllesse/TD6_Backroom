@@ -4,8 +4,10 @@
 #include "UI/RoomInfoWidget.h"
 
 #include "Chain.h"
+#include "EventBus.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
+#include "Online/BROnlineGameTags.h"
 #include "Online/BROnlineSubsystem.h"
 
 void URoomInfoWidget::OnJoinButtonClicked()
@@ -14,6 +16,14 @@ void URoomInfoWidget::OnJoinButtonClicked()
 	{
 		Object->JoinSession(SessionInfo);
 	});
+
+	
+}
+
+void URoomInfoWidget::NativeDestruct()
+{
+	Super::NativeDestruct();
+	UEventBus::Remove(this,Online_Callback_OnJoinSessionCompleted , OnJoinCompletedHandle);
 }
 
 void URoomInfoWidget::NativeConstruct()
@@ -21,6 +31,13 @@ void URoomInfoWidget::NativeConstruct()
 	Super::NativeConstruct();
 
 	JoinButton->OnClicked.AddDynamic(this, &ThisClass::OnJoinButtonClicked);
+	UEventBus::AddLambda(this, Online_Callback_OnJoinSessionCompleted, [&](EOnJoinSessionCompleteResult::Type Result)
+	{
+		Chain::Execute(UBROnlineSubsystem::Get(GetWorld()), [](UBROnlineSubsystem* Subsystem)
+		{
+			Subsystem->UpdatePresence(EOnlinePresenceState::Online, TEXT("Waiting in lobby"), true);
+		});
+	});
 }
 
 void URoomInfoWidget::SetupRoomInfo(const FOnlineSessionSearchResult& SessionSearchResult)

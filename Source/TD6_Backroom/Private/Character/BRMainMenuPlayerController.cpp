@@ -38,67 +38,20 @@ void ABRMainMenuPlayerController::BeginPlay()
 		})
 		.Execute(&UBROnlineSubsystem::QueryFriendList);
 		
-		Chain::StartChain(MainMenu.Get())
-		.Transform([](UMainMenuWidget* Widget)
+		Chain::Execute(MainMenu.Get(),[](UMainMenuWidget* Widget)
 		{
 			Widget->OnLogin();
-			return Widget->FriendList.Get();
-		})
-		.Execute(&UFriendListWidget::UpdateLocalPlayer);
-	});
-	DelegateHandles.Add(Online_Callback_OnLoginComplete, Handle);
-	
-	Handle = UEventBus::AddLambda(this, Online_Callback_OnReadFriendsListCompleted,
-		[&](int32 LocalUserNum, bool bWasSuccessful, const TArray<TSharedRef<FOnlineFriend>>& OnlineFriends, const FString& ErrorStr)
-	{
-		if (bWasSuccessful)
-		{
-			Chain::StartChain(MainMenu.Get())
-			.Transform([](UMainMenuWidget* Widget)
-			{
-				return Widget->FriendList.Get();
-			})
-			.Execute([&](UFriendListWidget* FriendListWidget)
-			{
-				FriendListWidget->UpdateUser(OnlineFriends);
-			});
-		}
-	});
-	DelegateHandles.Add(Online_Callback_OnReadFriendsListCompleted, Handle);
-	
-	Handle = UEventBus::AddLambda(this, Online_Callback_OnPresenceReceived,
-		[&](const FUniqueNetId& UserId, const TSharedRef<FOnlineUserPresence>& Presence)
-	{
-		Chain::StartChain(MainMenu.Get())
-		.Transform([](UMainMenuWidget* Widget)
-		{
-			return Widget->FriendList.Get();
-		})
-		.Execute([&](UFriendListWidget* FriendListWidget)
-		{
-			FriendListWidget->UpdateUser(UserId, Presence);
 		});
 	});
-
-	DelegateHandles.Add(Online_Callback_OnPresenceReceived, Handle);
+	DelegateHandles.Add(Online_Callback_OnLoginComplete, Handle);
 	
 
 	if (Online::GetIdentityInterface(GetWorld())->GetLoginStatus(0) == ELoginStatus::LoggedIn)
 	{
-		Chain::StartChain(GetGameInstance())
-		.Transform([](const UGameInstance* GameInstance)
-		{
-			return GameInstance->GetSubsystem<UBROnlineSubsystem>();
-		})
-		.Execute(&UBROnlineSubsystem::QueryFriendList);
-
-		Chain::StartChain(MainMenu.Get())
-		.Transform([](UMainMenuWidget* Widget)
+		Chain::Execute(MainMenu.Get(),[](UMainMenuWidget* Widget)
 		{
 			Widget->OnLogin();
-			return Widget->FriendList.Get();
-		})
-		.Execute(&UFriendListWidget::UpdateLocalPlayer);
+		});
 	}
 	
 }

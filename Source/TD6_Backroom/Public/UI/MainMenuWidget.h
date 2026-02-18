@@ -29,9 +29,6 @@ class TD6_BACKROOM_API UMainMenuWidget : public UUserWidget
 	void OnJoinRoomClicked();
 
 public:
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UFriendListWidget> FriendList;
 	
 	virtual void NativeConstruct() override;
 	

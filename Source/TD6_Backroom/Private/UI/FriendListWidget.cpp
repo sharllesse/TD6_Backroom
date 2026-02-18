@@ -32,8 +32,26 @@ void UFriendListWidget::UpdateUser(const TSharedPtr<FOnlineFriend>& OnlineFriend
 	
 	UpdatePresence(OnlineFriend->GetPresence(), UserInfoWidget);
 	UpdateActivity(OnlineFriend, UserInfoWidget);
+
+	bool bIsJoinable = false;
+
+	if (const FVariantData* JoinableData = PresenceInfo.Status.Properties.Find(TEXT("Joinable")))
+	{
+		// 1. Tenter de récupérer directement en tant que Bool
+		if (JoinableData->GetType() == EOnlineKeyValuePairDataType::Bool)
+		{
+			JoinableData->GetValue(bIsJoinable);			
+		}
+		else
+		{
+			FString BoolAsString;
+			JoinableData->GetValue(BoolAsString);
+			bIsJoinable = BoolAsString.ToBool();
+			
+		}
+	}
 	
-	UserInfoWidget->SetCanBeJoin(PresenceInfo.bIsJoinable);
+	UserInfoWidget->SetCanBeJoin(bIsJoinable);
 	UserInfoWidget->SetCanBeInvited(PresenceInfo.bIsPlayingThisGame);
 }
 
