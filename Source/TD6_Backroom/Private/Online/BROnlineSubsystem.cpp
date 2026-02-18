@@ -13,6 +13,7 @@
 #include "Interfaces/OnlinePresenceInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Online/Http/BRAsyncTaskDownloadImage.h"
+#include "Online/OnlineSessionNames.h"
 
 #define ONLINE_LOG(Verbosity, Format, ...)\
 	UE_LOG(LogOWOnline, Verbosity, Format, ##__VA_ARGS__)
@@ -114,6 +115,7 @@ bool UBROnlineSubsystem::CreateSession(int32 SessionMaxConnections, const FStrin
 		OnlineSessionSettings.bAllowInvites = true;
 		OnlineSessionSettings.bUsesPresence = true;
 		OnlineSessionSettings.bShouldAdvertise = !bIsPrivate;
+		OnlineSessionSettings.bUseLobbiesIfAvailable = true;
 		OnlineSessionSettings.Set(Online_Settings_Session_Name, SessionName, EOnlineDataAdvertisementType::ViaOnlineService);
 
 		constexpr int32 MinimumConnections{ 1 };
@@ -150,6 +152,8 @@ bool UBROnlineSubsystem::FindSessions()
 			= OnlineData.CurrentSearchedSessionSettings
 			= MakeShared<FOnlineSessionSearch>();
 		CurrentSearchedSessionSettings->MaxSearchResults = 10;
+		CurrentSearchedSessionSettings->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+		CurrentSearchedSessionSettings->QuerySettings.Set(SEARCH_MINSLOTSAVAILABLE, 1, EOnlineComparisonOp::GreaterThanEquals);
 
 		return SessionInterface->FindSessions(0, CurrentSearchedSessionSettings.ToSharedRef());
 	}, Online::GetSessionInterface(GetWorld()));
