@@ -3,7 +3,9 @@
 
 #include "UI/MainMenuWidget.h"
 
+#include "OnlineSubsystemUtils.h"
 #include "Components/Button.h"
+#include "Interfaces/OnlinePresenceInterface.h"
 #include "UI/CreateRoomWidget.h"
 #include "UI/SearchLobbyWidget.h"
 #include "UI/UIManagerSubsystem.h"
@@ -34,10 +36,21 @@ void UMainMenuWidget::OnJoinRoomClicked()
 	});	
 }
 
+void UMainMenuWidget::OnLogin()
+{
+	auto& LocalId{ *Online::GetIdentityInterface(GetWorld())->GetUniquePlayerId(0) };
+	FOnlineUserPresenceStatus NewStatus;
+	NewStatus.State = EOnlinePresenceState::Online;
+	NewStatus.StatusStr = TEXT("In the menu");
+	Online::GetPresenceInterface(GetWorld())->SetPresence(LocalId, NewStatus);
+}
+
 void UMainMenuWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
 	CreateRoomButton->OnClicked.AddDynamic(this, &UMainMenuWidget::OnCreateRoomClicked);
 	JoinRoomButton->OnClicked.AddDynamic(this, &UMainMenuWidget::OnJoinRoomClicked);
+
+
 }

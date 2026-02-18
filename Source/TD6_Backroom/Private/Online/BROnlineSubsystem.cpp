@@ -110,13 +110,16 @@ bool UBROnlineSubsystem::CreateSession(int32 SessionMaxConnections, const FStrin
 		const FUniqueNetIdPtr UniquePlayerId{ IdentityInterface->GetUniquePlayerId(0) };
 
 		FOnlineSessionSettings OnlineSessionSettings;
-		OnlineSessionSettings.bAllowJoinInProgress = false;
+		OnlineSessionSettings.bAllowJoinInProgress = true;
 		OnlineSessionSettings.bAllowJoinViaPresenceFriendsOnly = !bIsPrivate;
+		OnlineSessionSettings.bAllowJoinViaPresence = true;
 		OnlineSessionSettings.bAllowInvites = true;
 		OnlineSessionSettings.bUsesPresence = true;
 		OnlineSessionSettings.bShouldAdvertise = !bIsPrivate;
 		OnlineSessionSettings.bUseLobbiesIfAvailable = true;
 		OnlineSessionSettings.Set(Online_Settings_Session_Name, SessionName, EOnlineDataAdvertisementType::ViaOnlineService);
+		OnlineSessionSettings.Set(SETTING_ACTIVITY_SESSION, true, EOnlineDataAdvertisementType::ViaOnlineService);
+		OnlineSessionSettings.Set(SETTING_MULTIPLAYER_VISIBILITY, 0, EOnlineDataAdvertisementType::ViaOnlineService);
 
 		constexpr int32 MinimumConnections{ 1 };
 		SessionMaxConnections = FMath::Clamp(SessionMaxConnections, MinimumConnections, MaxSessionConnections);
@@ -278,7 +281,7 @@ void UBROnlineSubsystem::OnCreateSessionCompleted(FName SessionName, bool bWasSu
 	Internal_ExecuteOnValidContext(
 	[this, bWasSuccessful, SessionName]
 	(const TSharedPtr<FOnlineSessionSettings>& OnlineSessionSettings,
-	const IOnlineSessionPtr& SessionInterface,
+	const IOnlinePresencePtr& PresenceInterface,
 	const IOnlineIdentityPtr& IdentityInterface)
 	{
 		FString SettingsSessionName;
@@ -299,8 +302,11 @@ void UBROnlineSubsystem::OnCreateSessionCompleted(FName SessionName, bool bWasSu
 		
 		ONLINE_LOG(Log, TEXT("Session: Creation of the session [Name: %s] was a success."), *SettingsSessionName)
 
-		auto& LocalId{ *IdentityInterface->GetUniquePlayerId(0) };
-		SessionInterface->RegisterPlayer(SessionName, LocalId, false);
+		// auto& LocalId{ *IdentityInterface->GetUniquePlayerId(0) };
+		// FOnlineUserPresenceStatus NewStatus;
+		// NewStatus.State = EOnlinePresenceState::Online;
+		// NewStatus.StatusStr = TEXT("Waiting in lobby");
+		// PresenceInterface->SetPresence(LocalId, NewStatus);
 		
 		UEventBus::Broadcast<const FString&>(this, Online_Callback_OnCreateSessionCompleted,
 			SettingsSessionName, TWeakPtr<const FOnlineSessionSettings>{ OnlineSessionSettings }, bWasSuccessful);
@@ -309,10 +315,10 @@ void UBROnlineSubsystem::OnCreateSessionCompleted(FName SessionName, bool bWasSu
 		{
 			const FName LoadedMapPath{ UBROnlineSettings::Get()->LoadedMapOnSessionCreation.GetLongPackageName() };
 			const FString& LoadedMapOptions{ UBROnlineSettings::Get()->LoadedMapOptionsOnSessionCreation };
-			UGameplayStatics::OpenLevel(this, LoadedMapPath, true, LoadedMapOptions);
+			UGameplayStatics::OpenLevel(this, LoadedMapPath, true, TEXT("?listen"));
 		}
 	}, OnlineData.CurrentOnlineSessionSettings,
-	Online::GetSessionInterface(World),
+	Online::GetPresenceInterface(World),
 	Online::GetIdentityInterface(World));
 }
 

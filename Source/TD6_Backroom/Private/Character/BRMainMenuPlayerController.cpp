@@ -41,6 +41,7 @@ void ABRMainMenuPlayerController::BeginPlay()
 		Chain::StartChain(MainMenu.Get())
 		.Transform([](UMainMenuWidget* Widget)
 		{
+			Widget->OnLogin();
 			return Widget->FriendList.Get();
 		})
 		.Execute(&UFriendListWidget::UpdateLocalPlayer);
@@ -94,6 +95,7 @@ void ABRMainMenuPlayerController::BeginPlay()
 		Chain::StartChain(MainMenu.Get())
 		.Transform([](UMainMenuWidget* Widget)
 		{
+			Widget->OnLogin();
 			return Widget->FriendList.Get();
 		})
 		.Execute(&UFriendListWidget::UpdateLocalPlayer);

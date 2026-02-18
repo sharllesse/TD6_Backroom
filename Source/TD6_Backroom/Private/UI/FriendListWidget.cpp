@@ -101,7 +101,27 @@ void UFriendListWidget::UpdatePresence(const FOnlineUserPresence& PresenceInfo,
 void UFriendListWidget::UpdateActivity(const TSharedPtr<FOnlineFriend>& OnlineFriend,
 	const TStrongObjectPtr<UUserInfoWidget>& UserInfoWidget) const
 {
-	
+	if (!OnlineFriend->GetPresence().bIsOnline)
+	{
+		return;
+	}
+
+	if (!OnlineFriend->GetPresence().Status.StatusStr.IsEmpty())
+	{
+		UserInfoWidget->SetActivity(OnlineFriend->GetPresence().Status.StatusStr);
+	}
+	else if (OnlineFriend->GetPresence().bIsPlayingThisGame)
+	{
+		UserInfoWidget->SetActivity(TEXT("Playing this game"));
+	}
+	else if (OnlineFriend->GetPresence().bIsPlaying)
+	{
+		UserInfoWidget->SetActivity(TEXT("Playing"));
+	}
+	else if (OnlineFriend->GetPresence().bIsOnline)
+	{
+		UserInfoWidget->SetActivity(TEXT("Chilling"));
+	}
 }
 
 void UFriendListWidget::UpdateLocalPlayer() const
