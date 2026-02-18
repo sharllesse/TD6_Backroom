@@ -267,49 +267,49 @@ void UBROnlineSubsystem::OnLoginStatusChanged(int32 LocalUserNum, ELoginStatus::
 	(this, Online_Callback_OnLoginStatusChanged, LocalUserNum, OldStatus, NewStatus, NewId);
 }
 
-void UBROnlineSubsystem::OnCreateSessionCompleted(FName InSessionName, bool bWasSuccessful)
+void UBROnlineSubsystem::OnCreateSessionCompleted(FName SessionName, bool bWasSuccessful)
 {
-	if (Internal_ExecuteOnValidContext(
-		[this, bWasSuccessful, InSessionName](const TSharedPtr<FOnlineSessionSettings>& OnlineSessionSettings)
-		{
-			FString SessionName;
-			if (!OnlineSessionSettings->Get(Online_Settings_Session_Name, SessionName))
-			{
-				return false;
-			}
-
-			if (!bWasSuccessful)
-			{
-				ONLINE_LOG(Error, TEXT("Session: Creation of the session [Name: %s] has failed."), *SessionName)
-			}
-			else
-			{
-				ONLINE_LOG(Log, TEXT("Session: Creation of the session [Name: %s] was a success."), *SessionName)
-			}
-			Online::GetSessionInterface(GetWorld())->RegisterPlayer(
-				InSessionName, *Online::GetIdentityInterface(GetWorld())->GetUniquePlayerId(0), false);
-			
-			UEventBus::Broadcast<const FString&>(this, Online_Callback_OnCreateSessionCompleted,
-				SessionName, TWeakPtr<const FOnlineSessionSettings>{ OnlineSessionSettings }, bWasSuccessful);
-			
-			if (UBROnlineSettings::Get()->bAutoLoadMapOnSessionCreation && bWasSuccessful)
-			{
-				const FName LoadedMapPath{ UBROnlineSettings::Get()->LoadedMapOnSessionCreation.GetLongPackageName() };
-				const FString& LoadedMapOptions{ UBROnlineSettings::Get()->LoadedMapOptionsOnSessionCreation };
-				UGameplayStatics::OpenLevel(this, LoadedMapPath, true, LoadedMapOptions);
-			}
-			
-			return true;
-			
-		}, OnlineData.CurrentOnlineSessionSettings))
+	const UWorld* World{ GetWorld() };
+	
+	Internal_ExecuteOnValidContext(
+	[this, bWasSuccessful, SessionName]
+	(const TSharedPtr<FOnlineSessionSettings>& OnlineSessionSettings,
+	const IOnlineSessionPtr& SessionInterface,
+	const IOnlineIdentityPtr& IdentityInterface)
 	{
-		return;
-	}
+		FString SettingsSessionName;
+		if (!OnlineSessionSettings->Get(Online_Settings_Session_Name, SettingsSessionName))
+		{
+			ONLINE_LOG(Error, TEXT("Session: Unable to retrieve session settings. Fallback to the error broadcast."))
 
-	ONLINE_LOG(Error, TEXT("Session: Unable to retrieve session settings. Fallback to the error broadcast."))
+			UEventBus::Broadcast<const FString&>(this, Online_Callback_OnCreateSessionCompleted,
+			FString{ Online_Settings_Error }, TWeakPtr<const FOnlineSessionSettings>{ nullptr }, bWasSuccessful);
+			return;
+		}
+		
+		if (!bWasSuccessful)
+		{
+			ONLINE_LOG(Error, TEXT("Session: Creation of the session [Name: %s] has failed."), *SettingsSessionName)
+			return;
+		}
+		
+		ONLINE_LOG(Log, TEXT("Session: Creation of the session [Name: %s] was a success."), *SettingsSessionName)
 
-	UEventBus::Broadcast<const FString&>(this, Online_Callback_OnCreateSessionCompleted,
-		FString{ Online_Settings_Error }, TWeakPtr<const FOnlineSessionSettings>{ nullptr }, bWasSuccessful);
+		auto& LocalId{ *IdentityInterface->GetUniquePlayerId(0) };
+		SessionInterface->RegisterPlayer(SessionName, LocalId, false);
+		
+		UEventBus::Broadcast<const FString&>(this, Online_Callback_OnCreateSessionCompleted,
+			SettingsSessionName, TWeakPtr<const FOnlineSessionSettings>{ OnlineSessionSettings }, bWasSuccessful);
+		
+		if (UBROnlineSettings::Get()->bAutoLoadMapOnSessionCreation && bWasSuccessful)
+		{
+			const FName LoadedMapPath{ UBROnlineSettings::Get()->LoadedMapOnSessionCreation.GetLongPackageName() };
+			const FString& LoadedMapOptions{ UBROnlineSettings::Get()->LoadedMapOptionsOnSessionCreation };
+			UGameplayStatics::OpenLevel(this, LoadedMapPath, true, LoadedMapOptions);
+		}
+	}, OnlineData.CurrentOnlineSessionSettings,
+	Online::GetSessionInterface(World),
+	Online::GetIdentityInterface(World));
 }
 
 void UBROnlineSubsystem::OnDestroySessionRequested(int32 LocalUserNum, FName)
