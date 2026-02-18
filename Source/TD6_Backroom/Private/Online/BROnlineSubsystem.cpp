@@ -14,6 +14,12 @@
 #include "Kismet/GameplayStatics.h"
 #include "Online/Http/BRAsyncTaskDownloadImage.h"
 #include "Online/OnlineSessionNames.h"
+#include "eos_ui.h"
+#include "eos_sdk.h"
+#include "IOnlineSubsystemEOS.h"
+#include "IEOSSDKManager.h"
+
+static EOS_NotificationId OverlayNotifId = EOS_INVALID_NOTIFICATIONID;
 
 #define ONLINE_LOG(Verbosity, Format, ...)\
 	UE_LOG(LogOWOnline, Verbosity, Format, ##__VA_ARGS__)
@@ -585,6 +591,38 @@ void UBROnlineSubsystem::OnInviteAccepted(const FUniqueNetId& UserId, const FUni
 	QueryFriendList();
 }
 
+void UBROnlineSubsystem::OnExternalOverlayOpen(const EOS_UI_OnDisplaySettingsUpdatedCallbackInfo* Data)
+{
+	UBROnlineSubsystem* This = static_cast<UBROnlineSubsystem*>(Data->ClientData);
+
+	
+	const bool bOverlayVisible = Data->bIsVisible == EOS_TRUE;
+	const bool bHasExclusiveInput = Data->bIsExclusiveInput == EOS_TRUE;
+	
+	if (bOverlayVisible && bHasExclusiveInput && !This->bMainExternalOverlayIsOpen)
+	{ 
+		This->bMainExternalOverlayIsOpen = true;
+		UEventBus::Broadcast(This->GetWorld(), Online_Callback_OnMainExternalUIOverlayChange, true);
+		return;
+	}
+	if (!bOverlayVisible && This->bMainExternalOverlayIsOpen)
+	{
+		This->bMainExternalOverlayIsOpen = false;
+		UEventBus::Broadcast(This->GetWorld(), Online_Callback_OnMainExternalUIOverlayChange, false);
+		return;
+	}
+	
+}
+
+EOS_HUI UBROnlineSubsystem::GetExternalUIHandle()
+{
+	IEOSSDKManager* SDKManager = IEOSSDKManager::Get();
+	if (!SDKManager || SDKManager->GetActivePlatforms().IsEmpty())
+		return nullptr;
+
+	return EOS_Platform_GetUIInterface(*SDKManager->GetActivePlatforms()[0]);
+}
+
 void UBROnlineSubsystem::UpdatePresence(EOnlinePresenceState::Type State, const FString& StatusText, bool bIsJoinable) const
 {
 	const UWorld* World{ GetWorld() };
@@ -680,6 +718,20 @@ void UBROnlineSubsystem::Internal_RegisterDelegates()
 		FriendsInterface->AddOnInviteAcceptedDelegate_Handle(
 			FOnInviteAcceptedDelegate::CreateUObject(this, &UBROnlineSubsystem::OnInviteAccepted));
 	}, Online::GetFriendsInterface(World));
+	
+	
+	EOS_HUI UIHandle = GetExternalUIHandle();
+	if (!UIHandle) return;
+
+	EOS_UI_AddNotifyDisplaySettingsUpdatedOptions Options = {};
+	Options.ApiVersion = EOS_UI_ADDNOTIFYDISPLAYSETTINGSUPDATED_API_LATEST;
+
+	OverlayNotifId = EOS_UI_AddNotifyDisplaySettingsUpdated(
+		UIHandle,
+		&Options,
+		this,
+		&UBROnlineSubsystem::OnExternalOverlayOpen
+	);
 }
 
 void UBROnlineSubsystem::Internal_ClearDelegates()
@@ -715,6 +767,17 @@ void UBROnlineSubsystem::Internal_ClearDelegates()
 	{
 		FriendsInterface->ClearOnFriendsChangeDelegates(0, this);
 	}, Online::GetFriendsInterface(World));
+	
+	if (OverlayNotifId != EOS_INVALID_NOTIFICATIONID)
+	{
+		EOS_HUI UIHandle = GetExternalUIHandle();
+		if (UIHandle)
+		{
+			EOS_UI_RemoveNotifyDisplaySettingsUpdated(UIHandle, OverlayNotifId);
+			OverlayNotifId = EOS_INVALID_NOTIFICATIONID;
+		}
+	}
+
 }
 
 void UBROnlineSubsystem::Internal_LockCallbacksSignature()
@@ -734,4 +797,6 @@ void UBROnlineSubsystem::Internal_LockCallbacksSignature()
 	UEventBus::LockSignature<const FUniqueNetId&, const TSharedRef<FOnlineUserPresence>&>(this, Online_Callback_OnPresenceReceived);
 	UEventBus::LockSignature<int32, bool, const TArray<TSharedRef<FOnlineFriend>>&, const FString&>(this, Online_Callback_OnReadFriendsListCompleted);
 	UEventBus::LockSignature<UTexture2DDynamic*, FUniqueNetIdWeakPtr>(this, Online_Callback_OnAvatarTextureRetrieved);
+	
+	UEventBus::LockSignature<bool>(this, Online_Callback_OnMainExternalUIOverlayChange);
 }

@@ -53,6 +53,11 @@ void ABRMainMenuPlayerController::BeginPlay()
 		});
 	}
 	
+	UEventBus::AddLambda(this, Online_Callback_OnMainExternalUIOverlayChange, [](bool bIsOpening)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Epic main overlay is opening ? = %d"), static_cast<int>(bIsOpening));
+	});
+	
 }
 
 void ABRMainMenuPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
