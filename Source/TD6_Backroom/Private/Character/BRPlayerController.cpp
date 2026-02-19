@@ -11,6 +11,8 @@ void ABRPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	 
+	SetInputMode(FInputModeGameOnly());
+	bShowMouseCursor = false; 
 	
 		
 	UEventBus::AddLambda(this, Online_Callback_OnMainExternalUIOverlayChange, [this](bool bIsOpening)
