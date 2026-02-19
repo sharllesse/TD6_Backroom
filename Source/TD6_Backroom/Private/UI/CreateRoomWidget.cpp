@@ -9,6 +9,7 @@
 #include "Components/TextBlock.h"
 #include "Components/EditableTextBox.h"
 #include "Components/CheckBox.h"
+#include "Components/SpinBox.h"
 #include "Online/BROnlineSubsystem.h"
 #include "UI/UIManagerSubsystem.h"
 
@@ -26,7 +27,7 @@ void UCreateRoomWidget::CreateSession()
 {
 	Chain::Execute(UBROnlineSubsystem::Get(GetWorld()), [&](UBROnlineSubsystem* Object)
 	{
-		Object->CreateSession(static_cast<int>(Slider->GetValue()), RoomName->GetText().ToString(), IsPrivateRoom->IsChecked());
+		Object->CreateSession(static_cast<int>(SpinBox->GetValue()), RoomName->GetText().ToString(), IsPrivateRoom->IsChecked());
 	});
 }
 
@@ -53,7 +54,7 @@ void UCreateRoomWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	Slider->OnValueChanged.AddDynamic(this, &ThisClass::UpdateTextSlider);
+	SpinBox->OnValueChanged.AddDynamic(this, &ThisClass::UpdateTextSlider);
 	BackButton->OnClicked.AddDynamic(this, &ThisClass::PopThisMenu);
 	CreateRoom->OnClicked.AddDynamic(this, &ThisClass::CreateSession);
 	RoomName->OnTextChanged.AddDynamic(this, &ThisClass::OnRoomNameChange);

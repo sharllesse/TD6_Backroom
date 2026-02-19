@@ -4,10 +4,18 @@
 #include "GameMode/BRLobbyGameMode.h"
 
 #include "Chain.h"
+#include "EventBus.h"
 #include "Linq.h"
 #include "GameFramework/GameStateBase.h"
+#include "GameState/BRLobbyGameState.h"
 #include "Online/BROnlineSubsystem.h"
 #include "PlayerState/BRLobbyPlayerState.h"
+#include "PlayerState/BRPlayerStateGameTags.h"
+
+ABRLobbyGameMode::ABRLobbyGameMode()
+{
+	bUseSeamlessTravel = true;
+}
 
 void ABRLobbyGameMode::CheckIfAllPlayersReady() const
 {
@@ -23,14 +31,16 @@ void ABRLobbyGameMode::CheckIfAllPlayersReady() const
 		{
 			return PlayerState->GetIsReady();
 		});
+
 		
-		if (bIsAllReady)
+		Chain::Execute(GetGameState<ABRLobbyGameState>(), [bIsAllReady](ABRLobbyGameState* LobbyGameState)
 		{
-			Chain::Execute(UBROnlineSubsystem::Get(GetWorld()), [this](UBROnlineSubsystem* Subsystem)
-			{
-				UE_LOG(LogTemp, Error, TEXT("All player are ready!"))
-				//Subsystem->StartSession();
-			});
-		}
+			LobbyGameState->Multicast_OnAllPlayerReady(bIsAllReady);
+		});
 	});
+}
+
+void ABRLobbyGameMode::Logout(AController* Exiting)
+{
+	Super::Logout(Exiting);
 }

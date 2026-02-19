@@ -118,14 +118,14 @@ bool UBROnlineSubsystem::CreateSession(int32 SessionMaxConnections, const FStrin
 		FOnlineSessionSettings OnlineSessionSettings;
 		OnlineSessionSettings.bAllowJoinInProgress = false;
 		OnlineSessionSettings.bAllowJoinViaPresenceFriendsOnly = !bIsPrivate;
-		OnlineSessionSettings.bAllowJoinViaPresence = true;
+		OnlineSessionSettings.bAllowJoinViaPresence = !bIsPrivate;
 		OnlineSessionSettings.bAllowInvites = true;
 		OnlineSessionSettings.bUsesPresence = true;
 		OnlineSessionSettings.bShouldAdvertise = !bIsPrivate;
 		OnlineSessionSettings.bUseLobbiesIfAvailable = true;
 		OnlineSessionSettings.Set(Online_Settings_Session_Name, SessionName, EOnlineDataAdvertisementType::ViaOnlineService);
 		OnlineSessionSettings.Set(SETTING_ACTIVITY_SESSION, true, EOnlineDataAdvertisementType::ViaOnlineService);
-		OnlineSessionSettings.Set(SETTING_MULTIPLAYER_VISIBILITY, 1, EOnlineDataAdvertisementType::ViaOnlineService);
+		OnlineSessionSettings.Set(SETTING_MULTIPLAYER_VISIBILITY, bIsPrivate ? 0 : 1, EOnlineDataAdvertisementType::ViaOnlineService);
 
 		constexpr int32 MinimumConnections{ 1 };
 		SessionMaxConnections = FMath::Clamp(SessionMaxConnections, MinimumConnections, MaxSessionConnections);
@@ -401,7 +401,7 @@ void UBROnlineSubsystem::OnDestroySessionCompleted(FName, bool bWasSuccessful)
 
 	ONLINE_LOG(Error, TEXT("Session: Unable to retrieve session settings. Fallback to the error broadcast."))
 	
-	UEventBus::Broadcast(this, Online_Callback_OnDestroySessionCompleted,
+	UEventBus::Broadcast<const FString&>(this, Online_Callback_OnDestroySessionCompleted,
 		FString{ Online_Settings_Error }, bWasSuccessful);
 }
 
@@ -663,6 +663,36 @@ void UBROnlineSubsystem::UpdatePresence(EOnlinePresenceState::Type State, const 
 	}, Online::GetPresenceInterface(World), Online::GetIdentityInterface(World));
 }
 
+int UBROnlineSubsystem::GetMaxPlayerCountSession() const
+{
+	const UWorld* World{GetWorld()};
+
+	return Internal_ExecuteOnValidContext(
+		[this](const IOnlineSessionPtr& SessionInterface)
+	{
+			return Internal_ExecuteOnValidContext([this] (const FNamedOnlineSession* CurrentSession)
+			{
+				return CurrentSession->SessionSettings.NumPrivateConnections + CurrentSession->SessionSettings.NumPublicConnections;
+			},
+			SessionInterface->GetNamedSession(NAME_GameSession));
+	}, Online::GetSessionInterface(World));
+}
+
+int UBROnlineSubsystem::GetCurrentPlayerCountSession() const
+{
+	const UWorld* World{GetWorld()};
+	
+	return Internal_ExecuteOnValidContext(
+		[this](const IOnlineSessionPtr& SessionInterface)
+	{
+			return Internal_ExecuteOnValidContext([this] (const FNamedOnlineSession* CurrentSession)
+			{
+				return FMath::Abs(CurrentSession->NumOpenPrivateConnections + CurrentSession->NumOpenPublicConnections - GetMaxPlayerCountSession());
+			},
+			SessionInterface->GetNamedSession(NAME_GameSession));
+	}, Online::GetSessionInterface(World));
+}
+
 bool UBROnlineSubsystem::PlayerIsInSession() const
 {
 	const UWorld* World{ GetWorld() };
@@ -818,7 +848,7 @@ void UBROnlineSubsystem::Internal_LockCallbacksSignature()
 
 	UEventBus::LockSignature<const FString&, TWeakPtr<const FOnlineSessionSettings>, bool>(this, Online_Callback_OnCreateSessionCompleted);
 	UEventBus::LockSignature<const FString&, int32>(this, Online_Callback_OnDestroySessionRequested);
-	UEventBus::LockSignature<FName, bool>(this, Online_Callback_OnDestroySessionCompleted);
+	UEventBus::LockSignature<const FString&, bool>(this, Online_Callback_OnDestroySessionCompleted);
 	UEventBus::LockSignature<const TArray<FOnlineSessionSearchResult>&, bool>(this, Online_Callback_OnFindSessionsCompleted);
 	UEventBus::LockSignature<EOnJoinSessionCompleteResult::Type>(this, Online_Callback_OnJoinSessionCompleted);
 	UEventBus::LockSignature<const bool, const int32, FUniqueNetIdPtr, const FOnlineSessionSearchResult&>(this, Online_Callback_OnSessionUserInviteAccepted);

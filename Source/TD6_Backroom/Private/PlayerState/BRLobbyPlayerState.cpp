@@ -25,13 +25,16 @@ void ABRLobbyPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
 	UEventBus::LockSignature<ABRLobbyPlayerState*, bool>(this, PlayerState_Callback_LobbyReadyChange);
+	UEventBus::LockSignature<ABRLobbyPlayerState*>(this, PlayerState_Callback_LeaveLobby);
 	UEventBus::Broadcast(this, PlayerState_Callback_LobbyReadyChange, this , bIsReady);
 }
 
 void ABRLobbyPlayerState::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
+	UEventBus::Broadcast(this, PlayerState_Callback_LeaveLobby, this);
 	UEventBus::UnlockSignature(this, PlayerState_Callback_LobbyReadyChange);
+	UEventBus::UnlockSignature(this, PlayerState_Callback_LeaveLobby);
 }
 
 void ABRLobbyPlayerState::SetIsReady(bool bNewReady)

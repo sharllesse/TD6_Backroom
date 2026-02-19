@@ -16,8 +16,10 @@ class TD6_BACKROOM_API ABRLobbyGameMode : public AGameModeBase
 	
 protected:
 	 
-	
+	ABRLobbyGameMode();
 public:
 	void CheckIfAllPlayersReady() const;
+
+	virtual void Logout(AController* Exiting) override;
 	
 };

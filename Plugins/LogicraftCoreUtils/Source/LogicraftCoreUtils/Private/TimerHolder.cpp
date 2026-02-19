@@ -68,37 +68,46 @@ float FTimerHolder::GetRemainingTime() const
 	return TimerManager->GetTimerRemaining(TimerHandle);
 }
 
-bool FTimerHolder::RetrieveTimerManager()
+bool FTimerHolder::	RetrieveTimerManager()
 {
 	if (TimerManager)
 	{
 		return true;
 	}
-	
+
 	if (GEngine)
 	{
 		for (const FWorldContext& Context : GEngine->GetWorldContexts())
 		{
 			if (Context.WorldType == EWorldType::Game || Context.WorldType == EWorldType::PIE)
 			{
-				TimerManager = &Context.World()->GetTimerManager();
-				return true;
+				if (UWorld* World = Context.World())
+				{
+					TimerManager = &World->GetTimerManager();
+					return true;
+				}
 			}
 		}
 	}
-	
+
 #if WITH_EDITOR
-	if (!GEditor || !GEditor->GetEditorWorldContext().World())
+	if (!GEditor)
 	{
 		return false;
 	}
 
-	TimerManager = &GEditor->GetEditorWorldContext().World()->GetTimerManager();
+	UWorld* EditorWorld = GEditor->GetEditorWorldContext().World();
+	if (!EditorWorld)
+	{
+		return false;
+	}
 
+	TimerManager = &EditorWorld->GetTimerManager();
 	return true;
 #else
 	return false;
 #endif
-	
-	
 }
+	
+	
+

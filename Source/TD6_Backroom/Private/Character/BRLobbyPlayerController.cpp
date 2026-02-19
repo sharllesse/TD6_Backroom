@@ -33,6 +33,10 @@ void ABRLobbyPlayerController::ToggleReadyState()
 void ABRLobbyPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	SetInputMode(FInputModeUIOnly());
+	bShowMouseCursor = true;
+	
 	auto OptionalLobbyInfo = Chain::StartChain(GetLocalPlayer())
 	.Transform([](ULocalPlayer* LocalPlayer)
 	{

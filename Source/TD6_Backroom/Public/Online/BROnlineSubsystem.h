@@ -69,6 +69,9 @@ public:
 	void RetrievedAvatarTexture(const FString& AvatarUrl, FUniqueNetIdRef UserId);
 	
 	void UpdatePresence(EOnlinePresenceState::Type State, const FString& StatusText, bool bIsJoinable) const;
+
+	int GetMaxPlayerCountSession() const;
+	int GetCurrentPlayerCountSession() const;
 	
 	bool PlayerIsInSession() const;
 private:
