@@ -715,6 +715,17 @@ bool UBROnlineSubsystem::PlayerIsInSession() const
 	}, Online::GetSessionInterface(World));
 }
 
+FString UBROnlineSubsystem::GetLocalPlayerUserName() const
+{
+	const UWorld* World{ GetWorld() };
+	
+	return Internal_ExecuteOnValidContext(
+	[this](const IOnlineIdentityPtr& IdentityInterface)
+	{
+		return IdentityInterface->GetPlayerNickname(0);
+	}, Online::GetIdentityInterface(World));
+}
+
 void UBROnlineSubsystem::Internal_RegisterDelegates()
 {
 	const UWorld* World{ GetWorld() };

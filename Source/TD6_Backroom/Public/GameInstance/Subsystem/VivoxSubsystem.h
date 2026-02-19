@@ -1,0 +1,41 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Subsystems/GameInstanceSubsystem.h"
+#include "VivoxSubsystem.generated.h"
+
+class ILoginSession;
+class IClient;
+DECLARE_LOG_CATEGORY_EXTERN(Log_BRVivox, Log, Log);
+
+class FVivoxCoreModule;
+/**
+ * 
+ */
+UCLASS()
+class TD6_BACKROOM_API UVivoxSubsystem : public UGameInstanceSubsystem
+{
+	GENERATED_BODY()
+	
+protected:
+	FVivoxCoreModule* VoiceModule{nullptr};
+	IClient* VoiceClient{nullptr};
+	ILoginSession* LoginSession{nullptr};
+	
+	bool bIsLoggedIn{false};
+	
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
+	
+	inline static const FString Server{TEXT("https://unity.vivox.com/appconfig/90721-td6_b-93439")};
+	inline static const FString Domain{TEXT("mtu1xp.vivox.com")};
+	inline static const FString TokenIssuer{TEXT("90721-td6_b-93439")};
+	inline static const FString TokenKey{TEXT("wCWOKUvKtyeOCogmHl8DPvhhSYghVEXQ")};
+	
+public:
+	
+	void Login();
+	void Logout();
+};
