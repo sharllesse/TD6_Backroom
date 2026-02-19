@@ -27,7 +27,8 @@ public class TD6_Backroom : ModuleRules
 			"HTTP",
 			"RenderCore",
 			"Renderer",
-			"UMG"
+			"UMG",
+			"EngineSettings",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

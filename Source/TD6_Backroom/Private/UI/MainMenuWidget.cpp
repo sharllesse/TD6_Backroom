@@ -3,7 +3,10 @@
 
 #include "UI/MainMenuWidget.h"
 
+#include "OnlineSubsystemUtils.h"
 #include "Components/Button.h"
+#include "Interfaces/OnlinePresenceInterface.h"
+#include "Online/BROnlineSubsystem.h"
 #include "UI/CreateRoomWidget.h"
 #include "UI/SearchLobbyWidget.h"
 #include "UI/UIManagerSubsystem.h"
@@ -40,4 +43,14 @@ void UMainMenuWidget::NativeConstruct()
 
 	CreateRoomButton->OnClicked.AddDynamic(this, &UMainMenuWidget::OnCreateRoomClicked);
 	JoinRoomButton->OnClicked.AddDynamic(this, &UMainMenuWidget::OnJoinRoomClicked);
+
+
+}
+
+void UMainMenuWidget::OnLogin()
+{
+	Chain::Execute(UBROnlineSubsystem::Get(GetWorld()), [](UBROnlineSubsystem* Subsystem)
+	{
+		Subsystem->UpdatePresence(EOnlinePresenceState::Online, TEXT("In menu"), false);
+	});
 }

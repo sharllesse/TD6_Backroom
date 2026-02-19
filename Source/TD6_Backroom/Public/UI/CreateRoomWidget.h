@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "CreateRoomWidget.generated.h"
 
+class USpinBox;
 class UButton;
 class UCheckBox;
 class UTextBlock;
@@ -24,7 +25,7 @@ protected:
 	TObjectPtr<UEditableTextBox> RoomName;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<USlider> Slider;
+	TObjectPtr<USpinBox> SpinBox;
 	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> TextSlider;

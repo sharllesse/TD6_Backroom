@@ -6,8 +6,8 @@
 #include "Blueprint/UserWidget.h"
 #include "SearchLobbyWidget.generated.h"
 
-class USizeBox;
 class URoomInfoWidget;
+class USizeBox; 
 class UScrollBox;
 class UEditableTextBox;
 class UButton;

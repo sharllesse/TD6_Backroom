@@ -1,0 +1,61 @@
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Character/BRMainMenuPlayerController.h"
+
+#include "Chain.h"
+#include "EventBus.h"
+#include "OnlineSubsystemUtils.h"
+#include "Online/BROnlineGameTags.h"
+#include "Online/BROnlineSubsystem.h"
+#include "UI/UIManagerSubsystem.h"
+#include "UI/MainMenuWidget.h"
+
+void ABRMainMenuPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	SetInputMode(FInputModeUIOnly());
+	bShowMouseCursor = true;
+
+	SetupMainMenu();
+
+	
+}
+
+void ABRMainMenuPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+	
+	for (const auto& Element : DelegateHandles)
+	{
+		UEventBus::Remove(this, Element.Key, Element.Value);
+	}
+}
+
+void ABRMainMenuPlayerController::SetupMainMenu()
+{
+	auto OptionalMainMenu = Chain::StartChain(GetLocalPlayer())
+	.Transform([](ULocalPlayer* LocalPlayer)
+	{
+		return LocalPlayer->GetSubsystem<UUIManagerSubsystem>();
+	})
+	.GetValue([](UUIManagerSubsystem* UIManager)
+	{
+		return UIManager->PushMenu<UMainMenuWidget>();
+	});
+	
+	if (OptionalMainMenu)
+	{
+		MainMenu = *OptionalMainMenu;
+	}
+	
+
+	if (Online::GetIdentityInterface(GetWorld())->GetLoginStatus(0) == ELoginStatus::LoggedIn)
+	{
+		Chain::Execute(MainMenu.Get(),[](UMainMenuWidget* Widget)
+		{
+			Widget->OnLogin();
+		});
+	}
+}

@@ -70,3 +70,7 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnAvatarTextureRetrieved, "Online
 								"A callback that notify when the request to retrieved the avatar texture is a success or not.\n"
 								"Be aware that if the retrieve process failed, Texture is equal to nullptr.\n"
 								"[Args: UTexture2DDynamic* Texture, FUniqueNetIdWeakPtr UserId]")
+
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(Online_Callback_OnMainExternalUIOverlayChange, "Online.Callback.OnMainExternalUIOverlayOpen",
+								"A callback that notify when the main external overlay (epic friend overlay) open or close.\n"
+								"[Args: bool bIsOpening]")

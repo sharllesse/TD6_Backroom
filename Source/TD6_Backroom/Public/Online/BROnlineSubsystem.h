@@ -2,9 +2,12 @@
 
 #pragma once
 
+#include <eos_ui_types.h>
+
 #include "CoreMinimal.h"
 #include "TimerHolder.h"
 #include "Interfaces/OnlineIdentityInterface.h"
+#include "Interfaces/OnlinePresenceInterface.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "BROnlineSubsystem.generated.h"
 
@@ -38,6 +41,7 @@ class TD6_BACKROOM_API UBROnlineSubsystem : public UGameInstanceSubsystem
 
 private:
 	FOnlineSubsystemData OnlineData;
+	bool bMainExternalOverlayIsOpen = false;
 	
 public:
 	static ThisClass* Get(const UObject* WorldContext);
@@ -55,6 +59,7 @@ public:
 	bool DestroySession();
 	bool FindSessions();
 	bool JoinSession(const FOnlineSessionSearchResult& DesiredSession);
+	bool StartSession();
 
 	void LaunchRefreshSessionsTimer(float Rate);
 	void StopRefreshSessionTimer();
@@ -63,6 +68,12 @@ public:
 	FString GetAvatarURL(TSharedRef<FOnlineUser> OnlineUser);
 	void RetrievedAvatarTexture(const FString& AvatarUrl, FUniqueNetIdRef UserId);
 	
+	void UpdatePresence(EOnlinePresenceState::Type State, const FString& StatusText, bool bIsJoinable) const;
+
+	int GetMaxPlayerCountSession() const;
+	int GetCurrentPlayerCountSession() const;
+	
+	bool PlayerIsInSession() const;
 private:
 	void OnLoggingCompleted(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error);
 	void OnLogoutCompleted(int32 LocalUserNum, bool bWasSuccessful);
@@ -85,6 +96,9 @@ private:
 	void OnBlockListChange(int32 LocalUserNum, const FString& ListName);
 	void OnFriendRemoved(const FUniqueNetId& UserId, const FUniqueNetId& FriendId);
 	void OnInviteAccepted(const FUniqueNetId& UserId, const FUniqueNetId& FriendId);
+
+	static void OnExternalOverlayOpen(const EOS_UI_OnDisplaySettingsUpdatedCallbackInfo* Data);
+	static EOS_HUI GetExternalUIHandle();
 	
 	void Internal_RegisterDelegates();
 	void Internal_ClearDelegates();

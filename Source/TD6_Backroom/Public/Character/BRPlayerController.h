@@ -44,13 +44,6 @@ protected:
 
 	TWeakObjectPtr<ABRPlayerCharacter> OwningCharacter;
 	
-	UPROPERTY()
-	TObjectPtr<UMainMenuWidget> MainMenu;
-	
-	UPROPERTY()
-	TObjectPtr<UCreateRoomWidget> CreateRoomWidget;
-
-	TMap<FGameplayTag, FDelegateHandle> DelegateHandles;
 
 protected:
 	virtual void BeginPlay() override;
