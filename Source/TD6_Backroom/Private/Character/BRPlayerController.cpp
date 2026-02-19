@@ -3,14 +3,30 @@
 #include "Character/BRPlayerController.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "EventBus.h"
+#include "Online/BROnlineGameTags.h"
 
 
 void ABRPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+	 
 	
-	SetInputMode(FInputModeGameOnly());
-	bShowMouseCursor = true; 
+		
+	UEventBus::AddLambda(this, Online_Callback_OnMainExternalUIOverlayChange, [this](bool bIsOpening)
+	{
+		if (bIsOpening)
+		{
+			SetInputMode(FInputModeUIOnly());
+			bShowMouseCursor = true; 
+		}
+		else
+		{
+			SetInputMode(FInputModeGameOnly());
+			bShowMouseCursor = false; 
+		}
+	});
+	
 	
 	//UEventBus::AddUObject(this, Online_Callback_OnExternalUIChange, this, &ABRPlayerController::OnExternalUIChange);
 }

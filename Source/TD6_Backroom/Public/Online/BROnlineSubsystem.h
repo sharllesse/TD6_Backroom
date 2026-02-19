@@ -59,6 +59,7 @@ public:
 	bool DestroySession();
 	bool FindSessions();
 	bool JoinSession(const FOnlineSessionSearchResult& DesiredSession);
+	bool StartSession();
 
 	void LaunchRefreshSessionsTimer(float Rate);
 	void StopRefreshSessionTimer();
@@ -69,6 +70,7 @@ public:
 	
 	void UpdatePresence(EOnlinePresenceState::Type State, const FString& StatusText, bool bIsJoinable) const;
 	
+	bool PlayerIsInSession() const;
 private:
 	void OnLoggingCompleted(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error);
 	void OnLogoutCompleted(int32 LocalUserNum, bool bWasSuccessful);

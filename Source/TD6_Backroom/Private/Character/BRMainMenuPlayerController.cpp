@@ -18,45 +18,8 @@ void ABRMainMenuPlayerController::BeginPlay()
 	SetInputMode(FInputModeUIOnly());
 	bShowMouseCursor = true;
 
-	MainMenu = Chain::StartChain(GetLocalPlayer())
-	.Transform([](ULocalPlayer* LocalPlayer)
-	{
-		return LocalPlayer->GetSubsystem<UUIManagerSubsystem>();
-	})
-	.Transform([](UUIManagerSubsystem* UIManager)
-	{
-		return UIManager->PushMenu<UMainMenuWidget>();
-	});
+	SetupMainMenu();
 
-	auto Handle = UEventBus::AddLambda(this, Online_Callback_OnLoginComplete, [&]( int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
-	{
-		Chain::StartChain(GetGameInstance())
-		.Transform([](const UGameInstance* GameInstance)
-		{
-			return GameInstance->GetSubsystem<UBROnlineSubsystem>();
-		})
-		.Execute(&UBROnlineSubsystem::QueryFriendList);
-		
-		Chain::Execute(MainMenu.Get(),[](UMainMenuWidget* Widget)
-		{
-			Widget->OnLogin();
-		});
-	});
-	DelegateHandles.Add(Online_Callback_OnLoginComplete, Handle);
-	
-
-	if (Online::GetIdentityInterface(GetWorld())->GetLoginStatus(0) == ELoginStatus::LoggedIn)
-	{
-		Chain::Execute(MainMenu.Get(),[](UMainMenuWidget* Widget)
-		{
-			Widget->OnLogin();
-		});
-	}
-	
-	UEventBus::AddLambda(this, Online_Callback_OnMainExternalUIOverlayChange, [](bool bIsOpening)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Epic main overlay is opening ? = %d"), static_cast<int>(bIsOpening));
-	});
 	
 }
 
@@ -67,5 +30,32 @@ void ABRMainMenuPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReas
 	for (const auto& Element : DelegateHandles)
 	{
 		UEventBus::Remove(this, Element.Key, Element.Value);
+	}
+}
+
+void ABRMainMenuPlayerController::SetupMainMenu()
+{
+	auto OptionalMainMenu = Chain::StartChain(GetLocalPlayer())
+	.Transform([](ULocalPlayer* LocalPlayer)
+	{
+		return LocalPlayer->GetSubsystem<UUIManagerSubsystem>();
+	})
+	.GetValue([](UUIManagerSubsystem* UIManager)
+	{
+		return UIManager->PushMenu<UMainMenuWidget>();
+	});
+	
+	if (OptionalMainMenu)
+	{
+		MainMenu = *OptionalMainMenu;
+	}
+	
+
+	if (Online::GetIdentityInterface(GetWorld())->GetLoginStatus(0) == ELoginStatus::LoggedIn)
+	{
+		Chain::Execute(MainMenu.Get(),[](UMainMenuWidget* Widget)
+		{
+			Widget->OnLogin();
+		});
 	}
 }

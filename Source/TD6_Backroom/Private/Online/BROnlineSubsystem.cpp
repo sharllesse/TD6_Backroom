@@ -116,7 +116,7 @@ bool UBROnlineSubsystem::CreateSession(int32 SessionMaxConnections, const FStrin
 		const FUniqueNetIdPtr UniquePlayerId{ IdentityInterface->GetUniquePlayerId(0) };
 
 		FOnlineSessionSettings OnlineSessionSettings;
-		OnlineSessionSettings.bAllowJoinInProgress = true;
+		OnlineSessionSettings.bAllowJoinInProgress = false;
 		OnlineSessionSettings.bAllowJoinViaPresenceFriendsOnly = !bIsPrivate;
 		OnlineSessionSettings.bAllowJoinViaPresence = true;
 		OnlineSessionSettings.bAllowInvites = true;
@@ -173,6 +173,14 @@ bool UBROnlineSubsystem::JoinSession(const FOnlineSessionSearchResult& DesiredSe
 	return Internal_ExecuteOnValidContext([&DesiredSession](const IOnlineSessionPtr& SessionInterface)
 	{
 		return SessionInterface->JoinSession(0, NAME_GameSession, DesiredSession);
+	}, Online::GetSessionInterface(GetWorld()));
+}
+
+bool UBROnlineSubsystem::StartSession()
+{
+	return Internal_ExecuteOnValidContext([](const IOnlineSessionPtr& SessionInterface)
+	{
+		return SessionInterface->StartSession(NAME_GameSession);
 	}, Online::GetSessionInterface(GetWorld()));
 }
 
@@ -307,7 +315,7 @@ void UBROnlineSubsystem::OnCreateSessionCompleted(FName SessionName, bool bWasSu
 			return;
 		}
 
-		SessionInterface->StartSession(SessionName);
+		//SessionInterface->StartSession(SessionName);
 		
 		ONLINE_LOG(Log, TEXT("Session: Creation of the session [Name: %s] was a success."), *SettingsSessionName)
 
@@ -653,6 +661,28 @@ void UBROnlineSubsystem::UpdatePresence(EOnlinePresenceState::Type State, const 
 			}));
 
 	}, Online::GetPresenceInterface(World), Online::GetIdentityInterface(World));
+}
+
+bool UBROnlineSubsystem::PlayerIsInSession() const
+{
+	const UWorld* World{ GetWorld() };
+	
+	return Internal_ExecuteOnValidContext(
+		[this](const IOnlineSessionPtr& SessionInterface)
+	{
+		if (const FNamedOnlineSession* ExistingSession = SessionInterface->GetNamedSession(NAME_GameSession))
+			{
+				const EOnlineSessionState::Type State = ExistingSession->SessionState;
+
+				if (State == EOnlineSessionState::InProgress || 
+					State == EOnlineSessionState::Pending || 
+					State == EOnlineSessionState::Starting)
+				{
+					return true;
+				}
+			}
+			return false;
+	}, Online::GetSessionInterface(World));
 }
 
 void UBROnlineSubsystem::Internal_RegisterDelegates()
