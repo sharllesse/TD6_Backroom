@@ -74,6 +74,8 @@ public:
 	int GetCurrentPlayerCountSession() const;
 	
 	bool PlayerIsInSession() const;
+	
+	FString GetLocalPlayerUserName() const;
 private:
 	void OnLoggingCompleted(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error);
 	void OnLogoutCompleted(int32 LocalUserNum, bool bWasSuccessful);

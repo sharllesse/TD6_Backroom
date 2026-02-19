@@ -4,7 +4,9 @@
 #include "Character/BRLobbyPlayerController.h"
 
 #include "Chain.h"
+#include "GameInstance/Subsystem/VivoxSubsystem.h"
 #include "GameMode/BRLobbyGameMode.h"
+#include "Online/BROnlineSubsystem.h"
 #include "PlayerState/BRLobbyPlayerState.h"
 #include "UI/UIManagerSubsystem.h"
 #include "UI/LobbyInfoWidget.h"
@@ -60,4 +62,8 @@ void ABRLobbyPlayerController::BeginPlay()
 	{
 		ToggleReadyState();
 	});
+	
+	Chain::StartChain(GetGameInstance())
+	.Transform([](UGameInstance* GameInstance){return GameInstance->GetSubsystem<UVivoxSubsystem>();})
+	.Execute(&UVivoxSubsystem::Login);
 }

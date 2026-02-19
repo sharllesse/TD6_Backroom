@@ -29,6 +29,7 @@ public class TD6_Backroom : ModuleRules
 			"Renderer",
 			"UMG",
 			"EngineSettings",
+			"VivoxCore"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
