@@ -178,4 +178,6 @@ void ULobbyInfoWidget::NativeConstruct()
 			}
 		}
 	}
+	
+	UpdatePlayerCount();
 }

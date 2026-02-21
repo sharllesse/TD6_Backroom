@@ -65,5 +65,5 @@ void ABRLobbyPlayerController::BeginPlay()
 	
 	Chain::StartChain(GetGameInstance())
 	.Transform([](UGameInstance* GameInstance){return GameInstance->GetSubsystem<UVivoxSubsystem>();})
-	.Execute(&UVivoxSubsystem::Login);
+	.Execute(&UVivoxSubsystem::JoinVocalRoom);
 }

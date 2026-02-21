@@ -4,7 +4,12 @@
 #include "GameInstance/Subsystem/VivoxSubsystem.h"
 
 #include "Chain.h"
+#include "EventBus.h"
+#include "IOnlineSubsystemEOS.h"
+#include "OnlineSubsystem.h"
+#include "OnlineSubsystemUtils.h"
 #include "VivoxCore.h"
+#include "GameInstance/BRGameInstanceGameplayTags.h"
 #include "Online/BROnlineSubsystem.h"
 #include "VivoxCore/Public/IClient.h"
 
@@ -23,11 +28,30 @@ void UVivoxSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	VoiceClient = &VoiceModule->VoiceClient();
 	VoiceClient->Initialize();
 	
+	UEventBus::LockSignature<const LoginState&>(this, GameInstance_Callback_OnVivoxLoginSessionStateChange);
+	UEventBus::LockSignature<const IChannelConnectionState&>(this, GameInstance_Callback_OnVivoxChannelSessionStateChange);
 }
 
 void UVivoxSubsystem::Deinitialize()
 {
 	Super::Deinitialize();
+	UEventBus::UnlockSignature(this, GameInstance_Callback_OnVivoxLoginSessionStateChange);
+	UEventBus::UnlockSignature(this, GameInstance_Callback_OnVivoxChannelSessionStateChange);
+}
+
+void UVivoxSubsystem::RetrieveVivoxUser()
+{
+	auto OnlineSubsystem = Online::GetSubsystem(GetWorld());
+	if (!OnlineSubsystem)
+	{
+		UE_LOG(Log_BRVivox, Error, TEXT("Unable to retrieve online subsystem!"));
+		return;
+	}
+	
+	if (auto VoiceChatInterface = OnlineSubsystem->GetVoiceInterface())
+	{
+		VoiceChatInterface.Get()->Init();
+	}
 }
 
 void UVivoxSubsystem::Login()
@@ -54,21 +78,23 @@ void UVivoxSubsystem::Login()
 	{
 		if (VxErrorSuccess == Result)
 		{
-			bIsLoggedIn = true; 
 			LoginSession = &NewLoginSession;
 		}
 	});
 	
-	NewLoginSession.EventStateChanged.AddLambda([](LoginState State)
+	NewLoginSession.EventStateChanged.AddLambda([this](const LoginState& State)
 	{
 		if (State == LoginState::LoggedIn)
 		{
+			bIsLoggedIn = true; 
 			UE_LOG(Log_BRVivox, Log, TEXT("Player successfully logged into Vivox."));
 		}
 		else
 		{
+			bIsLoggedIn = false; 
 			UE_LOG(Log_BRVivox, Log, TEXT("Player disconnected from Vivox."));
 		}
+		UEventBus::Broadcast<const LoginState&>(this, GameInstance_Callback_OnVivoxLoginSessionStateChange, State);
 	});
 	
 	NewLoginSession.BeginLogin("https://unity.vivox.com/appconfig/90721-td6_b-93439", 
@@ -78,4 +104,80 @@ void UVivoxSubsystem::Login()
 
 void UVivoxSubsystem::Logout()
 {
+	if (LoginSession)
+	{
+		LoginSession->Logout();
+	}
+}
+
+void UVivoxSubsystem::JoinVocalRoom()
+{
+	if (!LoginSession)
+	{
+		UE_LOG(Log_BRVivox, Error, TEXT("User is not connected to Vivox, can't join vocal room !"));
+		return;
+	}
+	
+	TOptional<FString> SessionName = Chain::StartChain(UBROnlineSubsystem::Get(GetWorld()))
+	.GetValue(&UBROnlineSubsystem::GetSessionName).Get(NullOpt);
+	
+	
+	if (!SessionName)
+	{
+		UE_LOG(Log_BRVivox, Error, TEXT("Unable to retrieve session name, can't join vocal room !"));
+		return;
+	}
+		
+	ChannelId NewChannelId(TokenIssuer, *SessionName, Domain, ChannelType::NonPositional);
+	IChannelSession& NewChannelSession(LoginSession->GetChannelSession(NewChannelId));
+
+	IChannelSession::FOnBeginConnectCompletedDelegate OnBeginConnectCompleted;
+
+	OnBeginConnectCompleted.BindLambda([this, &NewChannelSession](VivoxCoreError Error)
+	{
+		if (VxErrorSuccess == Error)
+		{
+			ChannelSession = &NewChannelSession;
+			Set3DPosition(FVector::ZeroVector, FVector::ForwardVector, FVector::UpVector);
+		}
+	});
+	
+	NewChannelSession.EventChannelStateChanged.AddLambda([this](const IChannelConnectionState& State)
+	{
+		FString ChannelName(State.ChannelSession().Channel().Name());
+		if (ConnectionState::Connected == State.State())
+		{
+			bIsInVocalRoom = true;
+			VoiceClient->AudioInputDevices().SetMuted(false);
+			VoiceClient->AudioOutputDevices().SetMuted(false);
+			LoginSession->SetTransmissionMode(TransmissionMode::All);
+			
+			UE_LOG(Log_BRVivox, Log, TEXT("Channel %s fully connected audio state is connected = %d"), *ChannelName, (int)(ChannelSession->AudioState() == ConnectionState::Connected));
+		}
+		else if (ConnectionState::Disconnected == State.State())
+		{
+			UE_LOG(Log_BRVivox, Log, TEXT("Channel %s fully disconnected\n"), *ChannelName);
+			bIsInVocalRoom = false;
+		}
+		UEventBus::Broadcast<const IChannelConnectionState&>(this, GameInstance_Callback_OnVivoxChannelSessionStateChange, State);
+	});
+	
+	NewChannelSession.BeginConnect(true, false, true, NewChannelSession.GetConnectToken(
+		TokenKey, FTimespan::FromDays(1)), OnBeginConnectCompleted);	
+}
+
+void UVivoxSubsystem::LeaveVocalRoom()
+{
+	if (bIsInVocalRoom && ChannelSession)
+	{
+		ChannelSession->Disconnect();
+	}
+}
+
+void UVivoxSubsystem::Set3DPosition(const FVector& Position, const FVector& Forward, const FVector& Up)
+{
+	if (ChannelSession)
+	{
+		ChannelSession->Set3DPosition(Position, Position, Forward, Up);
+	}
 }

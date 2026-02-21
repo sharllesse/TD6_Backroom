@@ -6,6 +6,8 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "VivoxSubsystem.generated.h"
 
+class IVoiceChatUser;
+class IChannelSession;
 class ILoginSession;
 class IClient;
 DECLARE_LOG_CATEGORY_EXTERN(Log_BRVivox, Log, Log);
@@ -23,8 +25,11 @@ protected:
 	FVivoxCoreModule* VoiceModule{nullptr};
 	IClient* VoiceClient{nullptr};
 	ILoginSession* LoginSession{nullptr};
+	IChannelSession* ChannelSession{nullptr};
+	IVoiceChatUser* VivoxUser;
 	
 	bool bIsLoggedIn{false};
+	bool bIsInVocalRoom{false};
 	
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
@@ -33,9 +38,15 @@ protected:
 	inline static const FString Domain{TEXT("mtu1xp.vivox.com")};
 	inline static const FString TokenIssuer{TEXT("90721-td6_b-93439")};
 	inline static const FString TokenKey{TEXT("wCWOKUvKtyeOCogmHl8DPvhhSYghVEXQ")};
-	
+
+	void RetrieveVivoxUser();
 public:
 	
 	void Login();
 	void Logout();
+	
+	void JoinVocalRoom();
+	void LeaveVocalRoom();
+	
+	void Set3DPosition(const FVector& Position, const FVector& Forward, const FVector& Up);
 };
