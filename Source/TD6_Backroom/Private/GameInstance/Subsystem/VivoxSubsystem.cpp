@@ -9,6 +9,7 @@
 #include "OnlineSubsystem.h"
 #include "OnlineSubsystemUtils.h"
 #include "VivoxCore.h"
+#include "Character/BRCharacterGameplayTags.h"
 #include "GameInstance/BRGameInstanceGameplayTags.h"
 #include "Online/BROnlineSubsystem.h"
 #include "VivoxCore/Public/IClient.h"
@@ -54,6 +55,42 @@ void UVivoxSubsystem::RetrieveVivoxUser()
 	}
 }
 
+FString UVivoxSubsystem::FormatChannelSessionName(const FString& InputString)
+{
+	FString SanitizedString = InputString;
+
+	if (SanitizedString.Len() > 200)
+	{
+		SanitizedString = SanitizedString.Left(200);
+	}
+
+	for (int32 Index = 0; Index < SanitizedString.Len(); ++Index)
+	{
+		TCHAR C = SanitizedString[Index];
+
+		bool bIsValid = (C >= '0' && C <= '9') ||
+						(C >= 'A' && C <= 'Z') ||
+						(C >= 'a' && C <= 'z') ||
+						C == '!' || 
+						C == '(' || 
+						C == ')' ||
+						C == '+' || 
+						C == '-' || 
+						C == '.' ||
+						C == '=' || 
+						C == '_' || 
+						C == '~' || 
+						C == '%';
+
+		if (!bIsValid)
+		{
+			SanitizedString[Index] = '_';
+		}
+	}
+
+	return SanitizedString;
+}
+
 void UVivoxSubsystem::Login()
 {
 	TOptional<FString> UserName = Chain::StartChain(UBROnlineSubsystem::Get(GetWorld()))
@@ -81,6 +118,7 @@ void UVivoxSubsystem::Login()
 			LoginSession = &NewLoginSession;
 		}
 	});
+	UE_LOG(Log_BRVivox, Log, TEXT("Begin vivox login."));
 	
 	NewLoginSession.EventStateChanged.AddLambda([this](const LoginState& State)
 	{
@@ -128,7 +166,7 @@ void UVivoxSubsystem::JoinVocalRoom()
 		return;
 	}
 		
-	ChannelId NewChannelId(TokenIssuer, *SessionName, Domain, ChannelType::NonPositional);
+	ChannelId NewChannelId(TokenIssuer, FormatChannelSessionName(*SessionName), Domain, ChannelType::Positional);
 	IChannelSession& NewChannelSession(LoginSession->GetChannelSession(NewChannelId));
 
 	IChannelSession::FOnBeginConnectCompletedDelegate OnBeginConnectCompleted;
@@ -152,12 +190,18 @@ void UVivoxSubsystem::JoinVocalRoom()
 			VoiceClient->AudioOutputDevices().SetMuted(false);
 			LoginSession->SetTransmissionMode(TransmissionMode::All);
 			
+			OnLocalPlayerMove = UEventBus::AddLambda(this, Character_Callback_OnPlayerMove, [this](const FTransform& NewTransform)
+			{
+				Set3DPosition(NewTransform.GetLocation(), NewTransform.GetUnitAxis(EAxis::X), NewTransform.GetUnitAxis(EAxis::Z));
+			});
+			
 			UE_LOG(Log_BRVivox, Log, TEXT("Channel %s fully connected audio state is connected = %d"), *ChannelName, (int)(ChannelSession->AudioState() == ConnectionState::Connected));
 		}
 		else if (ConnectionState::Disconnected == State.State())
 		{
 			UE_LOG(Log_BRVivox, Log, TEXT("Channel %s fully disconnected\n"), *ChannelName);
 			bIsInVocalRoom = false;
+			UEventBus::Remove(this, Character_Callback_OnPlayerMove, OnLocalPlayerMove);
 		}
 		UEventBus::Broadcast<const IChannelConnectionState&>(this, GameInstance_Callback_OnVivoxChannelSessionStateChange, State);
 	});

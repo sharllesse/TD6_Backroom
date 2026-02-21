@@ -40,6 +40,10 @@ protected:
 	inline static const FString TokenKey{TEXT("wCWOKUvKtyeOCogmHl8DPvhhSYghVEXQ")};
 
 	void RetrieveVivoxUser();
+	
+	FDelegateHandle OnLocalPlayerMove;
+	
+	FString FormatChannelSessionName(const FString& InputString);
 public:
 	
 	void Login();
