@@ -7,6 +7,7 @@
 #include "InputActionValue.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameInstance/Subsystem/VivoxSubsystem.h"
 #include "BRPlayerCharacter.generated.h"
 
 UCLASS()
@@ -27,6 +28,8 @@ public:
 	// Sets default values for this character's properties
 	ABRPlayerCharacter();
 
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 protected:
 	void OnMove(const FInputActionValue& InputActionValue);
 
