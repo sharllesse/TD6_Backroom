@@ -78,3 +78,5 @@ Plugins/**/Intermediate/*
 DerivedDataCache/*
 
 *.bat
+
+!Plugins/VivoxCore/Source
