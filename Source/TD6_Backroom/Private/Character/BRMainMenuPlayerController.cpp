@@ -6,6 +6,7 @@
 #include "Chain.h"
 #include "EventBus.h"
 #include "OnlineSubsystemUtils.h"
+#include "GameInstance/Subsystem/VivoxSubsystem.h"
 #include "Online/BROnlineGameTags.h"
 #include "Online/BROnlineSubsystem.h"
 #include "UI/UIManagerSubsystem.h"
@@ -17,7 +18,16 @@ void ABRMainMenuPlayerController::BeginPlay()
 	
 	SetInputMode(FInputModeUIOnly());
 	bShowMouseCursor = true;
+	
+	auto DelegateHandle = UEventBus::AddLambda(this,Online_Callback_OnLoginComplete,
+		[this](int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
+		{
+			Chain::StartChain(GetGameInstance())
+			.Transform([](UGameInstance* GameInstance){return GameInstance->GetSubsystem<UVivoxSubsystem>();})
+			.Execute(&UVivoxSubsystem::Login);
+		});
 
+	DelegateHandles.Add(Online_Callback_OnLoginComplete, DelegateHandle);
 	SetupMainMenu();
 
 	

@@ -715,6 +715,28 @@ bool UBROnlineSubsystem::PlayerIsInSession() const
 	}, Online::GetSessionInterface(World));
 }
 
+TOptional<FString> UBROnlineSubsystem::GetSessionName() const
+{
+	const UWorld* World{ GetWorld() };
+	
+	if (!PlayerIsInSession())
+	{
+		return NullOpt;
+	}
+	
+	return Internal_ExecuteOnValidContext(
+		[this](const IOnlineSessionPtr& SessionInterface)
+	{
+		if (auto SessionSetting = SessionInterface->GetSessionSettings(NAME_GameSession))
+		{
+			FString OutName;
+			SessionSetting->Get(Online_Settings_Session_Name, OutName);
+			return TOptional(OutName);
+		}
+			return TOptional<FString>(NullOpt);
+	}, Online::GetSessionInterface(World));
+}
+
 FString UBROnlineSubsystem::GetLocalPlayerUserName() const
 {
 	const UWorld* World{ GetWorld() };
