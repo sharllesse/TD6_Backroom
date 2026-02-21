@@ -79,4 +79,7 @@ DerivedDataCache/*
 
 *.bat
 
-!Plugins/VivoxCore/Source
+!Plugins/VivoxCore/Source/**/*.dll
+!Plugins/VivoxCore/Source/**/*.lib
+!Plugins/VivoxCore/Source/**/*.so
+!Plugins/VivoxCore/Source/**/*.dylib
