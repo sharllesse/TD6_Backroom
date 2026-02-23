@@ -9,7 +9,7 @@ void UUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 	FString AssetPath = TEXT("/Game/Blueprint/UI/DA_UIManager_Data.DA_UIManager_Data");
 
-	ManagerData = LoadObject<UUIManager_Data>(nullptr, *AssetPath);
+	ManagerData = LoadObject<UUIManager_Data>(this, *AssetPath);
 
 	if (ManagerData)
 	{
