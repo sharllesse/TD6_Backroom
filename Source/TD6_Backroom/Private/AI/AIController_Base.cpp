@@ -13,6 +13,8 @@ AAIController_Base::AAIController_Base()
 
 	SenseConfig_Sight = CreateDefaultSubobject<UAISenseConfig_Sight>("Sight Sense");
 	PerceptionComponent->ConfigureSense(*SenseConfig_Sight);
+
+	AAIController::SetGenericTeamId(1);
 }
 
 void AAIController_Base::OnPossess(APawn* InPawn)
