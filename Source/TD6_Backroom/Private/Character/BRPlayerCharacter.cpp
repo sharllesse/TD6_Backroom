@@ -1,6 +1,7 @@
 // Copyright (c) Logicraft Interactive. All Rights Reserved.
 
 #include "Character/BRPlayerCharacter.h"
+
 #include "EventBus.h"
 #include "ActorComponent/InteractionComponent.h"
 #include "Character/BRCharacterGameplayTags.h"
@@ -17,6 +18,8 @@ ABRPlayerCharacter::ABRPlayerCharacter()
 	CameraComponent->SetupAttachment(SpringArmComponent);
 
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("Interaction System"));
+	
+	GenericTeamId = 0;
 }
 
 void ABRPlayerCharacter::BeginPlay()
@@ -30,7 +33,6 @@ void ABRPlayerCharacter::BeginPlay()
 	GetCharacterMovement()->MaxWalkSpeed = PlayerData->WalkSpeed;
 	GetCharacterMovement()->MaxAcceleration = PlayerData->WalkSpeed * PlayerData->AccelerationModifier;
 	GetCharacterMovement()->MaxWalkSpeedCrouched = PlayerData->CrouchSpeed;
-
 }
 
 void ABRPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -40,6 +42,16 @@ void ABRPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		UEventBus::UnlockSignature(this, Character_Callback_OnPlayerMove);
 	}
+}
+
+void ABRPlayerCharacter::SetGenericTeamId(const FGenericTeamId& TeamID)
+{
+	GenericTeamId = TeamID;
+}
+
+FGenericTeamId ABRPlayerCharacter::GetGenericTeamId() const
+{
+	return GenericTeamId;
 }
 
 void ABRPlayerCharacter::Tick(float DeltaSeconds)

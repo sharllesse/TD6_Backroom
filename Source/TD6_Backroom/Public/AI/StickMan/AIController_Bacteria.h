@@ -13,4 +13,6 @@ class TD6_BACKROOM_API AAIController_Bacteria : public AAIController_Base
 
 public:
 	AAIController_Bacteria();
+
+	virtual void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus) override;
 };

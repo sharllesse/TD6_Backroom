@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GenericTeamAgentInterface.h"
+#include "GameFramework/Character.h"
 #include "InputActionValue.h"
 #include "ActorComponent/InteractionComponent.h"
 #include "Camera/CameraComponent.h"
@@ -35,7 +37,7 @@ public:
 };
 
 UCLASS()
-class TD6_BACKROOM_API ABRPlayerCharacter : public ACharacter
+class TD6_BACKROOM_API ABRPlayerCharacter : public ACharacter, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -53,6 +55,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data")
 	TObjectPtr<UBRPlayerData> PlayerData;
+
+	FGenericTeamId GenericTeamId;
 public:
 	// Sets default values for this character's properties
 	ABRPlayerCharacter();
@@ -67,6 +71,9 @@ public:
 	{
 		InteractionComponent->NotifyCanInteractEvent.BindLambda(Forward<Func>(Callback));
 	}
+
+	virtual void SetGenericTeamId(const FGenericTeamId& TeamID) override;
+	virtual FGenericTeamId GetGenericTeamId() const override;
 protected:
 	void OnMove(const FInputActionValue& InputActionValue);
 
@@ -83,4 +90,3 @@ protected:
 
 	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
 };
-
