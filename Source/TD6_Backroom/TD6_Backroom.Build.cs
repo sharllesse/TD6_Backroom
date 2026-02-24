@@ -29,7 +29,10 @@ public class TD6_Backroom : ModuleRules
 			"Renderer",
 			"UMG",
 			"EngineSettings",
-			"VivoxCore"
+			"VivoxCore",
+			"AIModule",
+			"GameplayTasks",
+			"NavigationSystem"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

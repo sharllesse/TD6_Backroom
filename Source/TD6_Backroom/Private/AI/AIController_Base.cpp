@@ -2,25 +2,30 @@
 
 
 #include "AI/AIController_Base.h"
+#include "BehaviorTree/BehaviorTree.h"
+#include "Perception/AIPerceptionComponent.h"
 
-
-// Sets default values
 AAIController_Base::AAIController_Base()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>("Perception Component");
+
+	SenseConfig_Sight = CreateDefaultSubobject<UAISenseConfig_Sight>("Sight Sense");
+	PerceptionComponent->ConfigureSense(*SenseConfig_Sight);
 }
 
-// Called when the game starts or when spawned
-void AAIController_Base::BeginPlay()
+void AAIController_Base::OnPossess(APawn* InPawn)
 {
-	Super::BeginPlay();
+	Super::OnPossess(InPawn);
 	
-}
+	UBlackboardComponent* BlackboardComp;
+	if (UseBlackboard(AssignedBehaviorTree->BlackboardAsset, BlackboardComp))
+	{
+		OnSetupBlackboardKey(BlackboardComp);
+		
+		RunBehaviorTree(AssignedBehaviorTree);
+	}
 
-// Called every frame
-void AAIController_Base::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
+	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AAIController_Base::OnTargetPerceptionUpdated);
 }
-

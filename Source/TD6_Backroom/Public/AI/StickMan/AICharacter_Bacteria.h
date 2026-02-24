@@ -3,16 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
-#include "AICharacter_Base.generated.h"
+#include "AI/AICharacter_Base.h"
+#include "AICharacter_Bacteria.generated.h"
 
 UCLASS()
-class TD6_BACKROOM_API AAICharacter_Base : public ACharacter
+class TD6_BACKROOM_API AAICharacter_Bacteria : public AAICharacter_Base
 {
 	GENERATED_BODY()
 
 public:
-	AAICharacter_Base();
+	AAICharacter_Bacteria();
 
 protected:
 	virtual void BeginPlay() override;

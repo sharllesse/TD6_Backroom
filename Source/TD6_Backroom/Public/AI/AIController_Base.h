@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Perception/AISenseConfig_Sight.h"
 #include "Runtime/AIModule/Classes/AIController.h"
 #include "AIController_Base.generated.h"
 
@@ -11,15 +12,19 @@ class TD6_BACKROOM_API AAIController_Base : public AAIController
 {
 	GENERATED_BODY()
 
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UBehaviorTree> AssignedBehaviorTree;
+
+	TWeakObjectPtr<UAISenseConfig_Sight> SenseConfig_Sight;
 public:
-	// Sets default values for this actor's properties
 	AAIController_Base();
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	virtual void OnSetupBlackboardKey(UBlackboardComponent* BlackboardComponent) {}
+	
+	virtual void OnPossess(APawn* InPawn) override;
+	
+	UFUNCTION()
+	virtual void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus) {}
 };
