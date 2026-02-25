@@ -3,6 +3,25 @@
 
 #include "Items/ItemData.h"
 
+void UItemDataTable::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+	
+	const FName ChangedPropertyName = (PropertyChangedEvent.MemberProperty != nullptr) 
+			? PropertyChangedEvent.MemberProperty->GetFName() 
+			: NAME_None;
+
+	if (ChangedPropertyName == GET_MEMBER_NAME_CHECKED(UItemDataTable, ItemsData))
+	{
+		for (auto [Type, ItemData] : ItemsData)
+		{
+			ItemData.Type = Type;
+			ItemData.Name = Type.GetTagLeafName().ToString();
+			ItemData.Count = 0;
+		}
+	}
+}
+
 void UItemDataTable::Init(UWorld* WorldContext)
 {
 	if (!WorldContext)

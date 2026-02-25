@@ -17,8 +17,7 @@ USTRUCT(Blueprintable, BlueprintType)
 struct FItemData
 {
 	GENERATED_BODY()
-
-protected:
+	
 	UPROPERTY(EditAnywhere)
 	FGameplayTag Type;
 	
@@ -30,6 +29,14 @@ protected:
 
 	UPROPERTY()
 	int Count{0};
+
+	UPROPERTY(EditAnywhere)
+	bool bIsShared{true};
+
+	bool operator==(const FItemData& Other) const
+	{
+		return Other.Type.MatchesTagExact(Type);
+	}
 };
 
 UCLASS()
@@ -39,6 +46,8 @@ class UItemDataTable : public UPrimaryDataAsset
 	
 	UPROPERTY(EditAnywhere)
 	TMap<FGameplayTag, FItemData> ItemsData;
+
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 
 	inline static TStrongObjectPtr<UItemDataTable> Self;
 

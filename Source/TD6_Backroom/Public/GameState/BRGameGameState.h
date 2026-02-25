@@ -18,8 +18,11 @@ class TD6_BACKROOM_API ABRGameGameState : public AGameStateBase
 protected:
 
 	UPROPERTY(Replicated)
-	TArray<FItemData> ItemMap;
+	TArray<FItemData> SharedInventory;
 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 public:
+	void AddItem(const FItemData& NewItem);
+	void RemoveItem(const FItemData& NewItem);
+	void ClearInventory();
 };
