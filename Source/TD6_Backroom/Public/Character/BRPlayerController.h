@@ -57,14 +57,16 @@ protected:
 	void SetupInputMappingContext();
 
 	UFUNCTION()
-	void OnMove(const FInputActionValue& InputActionValue);
+	void OnMove(const FInputActionValue& InputActionValue) const;
 
 	UFUNCTION()
 	void OnLook(const FInputActionValue& InputActionValue);
 
 	UFUNCTION()
-	void OnJump(const FInputActionValue& InputActionValue);
+	void OnJump(const FInputActionValue& InputActionValue) const;
 	
+	UFUNCTION()
+	void OnInteract(const FInputActionValue& InputActionValue) const;
 // 	UFUNCTION(BlueprintCallable)
 // 	void OnCreateSession_Debug();
 // private:

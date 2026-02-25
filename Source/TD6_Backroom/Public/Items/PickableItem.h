@@ -25,9 +25,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTag Type;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UMaterialInterface* HighlightMaterial;
 
 public:
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void OnBeginFocus() override;
+	virtual void OnEndFocus() override;
 	virtual void OnInteract(AActor* InInstigator) override;
 };

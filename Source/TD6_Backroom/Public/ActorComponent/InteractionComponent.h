@@ -30,8 +30,11 @@ protected:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 							   FActorComponentTickFunction* ThisTickFunction) override;
 
-	IInteractable* Target;
+	TScriptInterface<IInteractable> Target;
 
+	UPROPERTY(EditDefaultsOnly)
+	bool bDebug{false};
+	
 	UPROPERTY(EditDefaultsOnly)
 	float PickUpRange{500.f};
 public:
@@ -39,7 +42,10 @@ public:
 	NotifyCanInteractSignature NotifyCanInteractEvent;
 	OnInteractSignature OnInteract;
 
-	IInteractable* GetTarget() const;
+	TScriptInterface<IInteractable> GetTarget() const;
+	IInteractable* GetRawTarget() const;
+
+	bool CanInteract() const;
 	
 	UFUNCTION(Server, Reliable)
 	void TryInteract(const TScriptInterface<IInteractable>& InTarget);

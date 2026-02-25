@@ -94,7 +94,7 @@ void ABRPlayerController::SetupInputMappingContext()
 	}
 }
 
-void ABRPlayerController::OnMove(const FInputActionValue& InputActionValue)
+void ABRPlayerController::OnMove(const FInputActionValue& InputActionValue) const
 {
 	OwningCharacter->OnMove(InputActionValue);
 }
@@ -107,9 +107,14 @@ void ABRPlayerController::OnLook(const FInputActionValue& InputActionValue)
 	AddYawInput(LookInput.X);
 }
 
-void ABRPlayerController::OnJump(const FInputActionValue& InputActionValue)
+void ABRPlayerController::OnJump(const FInputActionValue& InputActionValue) const
 {
 	OwningCharacter->OnJump(InputActionValue);
+}
+
+void ABRPlayerController::OnInteract(const FInputActionValue& InputActionValue) const
+{
+	OwningCharacter->OnTryInteract();
 }
 
 

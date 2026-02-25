@@ -22,5 +22,7 @@ class TD6_BACKROOM_API IInteractable
 
 public:
 
+	virtual void OnBeginFocus();
+	virtual void OnEndFocus();
 	virtual void OnInteract(AActor* Instigator);
 };

@@ -34,3 +34,8 @@ void ABRGameGameState::ClearInventory()
 {
 	SharedInventory.Empty();
 }
+
+const TArray<FItemData>& ABRGameGameState::GetSharedInventory()
+{
+	return SharedInventory;
+}

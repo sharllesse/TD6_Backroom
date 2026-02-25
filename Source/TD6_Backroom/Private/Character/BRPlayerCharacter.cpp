@@ -2,8 +2,11 @@
 
 #include "Character/BRPlayerCharacter.h"
 
+#include "Chain.h"
 #include "EventBus.h"
+#include "ActorComponent/InteractionComponent.h"
 #include "Character/BRCharacterGameplayTags.h"
+#include "GameState/BRGameGameState.h"
 
 ABRPlayerCharacter::ABRPlayerCharacter()
 {
@@ -14,6 +17,8 @@ ABRPlayerCharacter::ABRPlayerCharacter()
 
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera Component"));
 	CameraComponent->SetupAttachment(SpringArmComponent);
+
+	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("Interaction System"));
 }
 
 void ABRPlayerCharacter::BeginPlay()
@@ -23,6 +28,8 @@ void ABRPlayerCharacter::BeginPlay()
 	{
 		UEventBus::LockSignature<const FTransform&>(this, Character_Callback_OnPlayerMove);
 	}
+
+
 }
 
 void ABRPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -32,6 +39,34 @@ void ABRPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		UEventBus::UnlockSignature(this, Character_Callback_OnPlayerMove);
 	}
+}
+
+void ABRPlayerCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	Chain::Execute(GetWorld()->GetGameState<ABRGameGameState>(), [&](ABRGameGameState* GameState)
+			{
+				for (int i = 0; i < GameState->GetSharedInventory().Num(); ++i)
+				{
+					const auto& Item = GameState->GetSharedInventory()[i];
+					GEngine->AddOnScreenDebugMessage(i, 2.f, FColor::Red,
+						FString::Printf(TEXT("Item %d : name %s, count %d"), i, *Item.Name, Item.Count) );
+				}
+			});
+}
+
+void ABRPlayerCharacter::OnTryInteract() const
+{
+	if (InteractionComponent->CanInteract())
+	{
+		InteractionComponent->TryInteract(InteractionComponent->GetTarget());
+	}
+}
+
+void ABRPlayerCharacter::GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const
+{
+	OutLocation = CameraComponent->GetComponentLocation();
+	OutRotation = GetBaseAimRotation();
 }
 
 void ABRPlayerCharacter::OnMove(const FInputActionValue& InputActionValue)

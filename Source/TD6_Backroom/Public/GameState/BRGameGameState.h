@@ -25,4 +25,5 @@ public:
 	void AddItem(const FItemData& NewItem);
 	void RemoveItem(const FItemData& NewItem);
 	void ClearInventory();
+	const TArray<FItemData>& GetSharedInventory();
 };

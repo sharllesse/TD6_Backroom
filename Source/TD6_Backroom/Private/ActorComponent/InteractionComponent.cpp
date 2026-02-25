@@ -13,6 +13,7 @@ UInteractionComponent::UInteractionComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
+	SetIsReplicatedByDefault(true);
 	// ...
 }
 
@@ -39,12 +40,18 @@ FHitResult UInteractionComponent::MakeVisibilityTrace() const
 	Owner->GetActorEyesViewPoint(Position, Rotation);
 
 	FVector Start{Position},
-	End{Position + Rotation.GetComponentForAxis(EAxis::X) * PickUpRange};
+	End{(Position + Rotation.Vector() * PickUpRange)};
 	
 	FHitResult Result;
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(Owner);
 	GetWorld()->LineTraceSingleByChannel(Result, Start, End, ECC_Visibility);
+	if (bDebug)
+	{
+		IF_WITH_EDITOR(
+		DrawDebugLine(GetWorld(), Result.TraceStart, Result.TraceEnd, FColor::Red, false, 2.0f, 0, 1.0f);
+			,)
+	}
 	return Result;
 }
 
@@ -53,22 +60,50 @@ void UInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                           FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (auto Pawn = Cast<APawn>(GetOwner()); !Pawn->IsLocallyControlled())
+		return;
 	
 	const auto Result = MakeVisibilityTrace();
-	
-	Target = Cast<IInteractable>(Result.GetActor());
-	
-	if (Target)
+
+	if (auto Interactable = Cast<IInteractable>(Result.GetActor()))
 	{
-		NotifyCanInteractEvent.ExecuteIfBound(true, Target);
-		return;
+		if (Interactable != Target.GetInterface())
+		{
+			if (Target.GetInterface())
+			{
+				Target->OnEndFocus();
+			}
+			NotifyCanInteractEvent.ExecuteIfBound(true, Interactable);
+			Interactable->OnBeginFocus();
+		}		
+		Target.SetInterface(Interactable);
+		Target.SetObject(Interactable->_getUObject());
 	}
-	NotifyCanInteractEvent.ExecuteIfBound(false, nullptr);
+	else
+	{
+		if (Target.GetInterface())
+		{
+			NotifyCanInteractEvent.ExecuteIfBound(false, nullptr);
+			Target->OnEndFocus();
+		}
+		Target = {};
+	}
 }
 
-IInteractable* UInteractionComponent::GetTarget() const
+TScriptInterface<IInteractable> UInteractionComponent::GetTarget() const
 {
 	return Target;
+}
+
+IInteractable* UInteractionComponent::GetRawTarget() const
+{
+	return Target.GetInterface();
+}
+
+bool UInteractionComponent::CanInteract() const
+{
+	return Target.GetInterface() != nullptr;
 }
 
 void UInteractionComponent::TryInteract_Implementation(const TScriptInterface<IInteractable>& InTarget)

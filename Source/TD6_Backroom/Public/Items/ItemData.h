@@ -47,7 +47,9 @@ class UItemDataTable : public UPrimaryDataAsset
 	UPROPERTY(EditAnywhere)
 	TMap<FGameplayTag, FItemData> ItemsData;
 
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	IF_WITH_EDITOR(
+		virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;,)
+	
 
 	inline static TStrongObjectPtr<UItemDataTable> Self;
 
