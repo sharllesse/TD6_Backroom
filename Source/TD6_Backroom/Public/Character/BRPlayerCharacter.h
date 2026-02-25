@@ -13,6 +13,28 @@
 class UInteractionComponent;
 
 UCLASS()
+class UBRPlayerData : public UPrimaryDataAsset
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float CrouchSpeed{150.f};
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float WalkSpeed{300.f};
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float SprintSpeed{600.f};
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float AccelerationModifier{4.f};
+
+	UPROPERTY(BlueprintReadWrite, Category = "Movement")
+	bool bIsSprinting{false};
+};
+
+UCLASS()
 class TD6_BACKROOM_API ABRPlayerCharacter : public ACharacter
 {
 	GENERATED_BODY()
@@ -28,6 +50,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UInteractionComponent> InteractionComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data")
+	TObjectPtr<UBRPlayerData> PlayerData;
 public:
 	// Sets default values for this character's properties
 	ABRPlayerCharacter();
@@ -40,6 +65,8 @@ protected:
 	void OnMove(const FInputActionValue& InputActionValue);
 
 	void OnJump(const FInputActionValue& InputActionValue);
+
+	void OnSprint(const FInputActionValue& InputActionValue) const;
 	
 	void OnTryInteract() const;
 

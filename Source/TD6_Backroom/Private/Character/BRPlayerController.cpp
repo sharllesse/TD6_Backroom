@@ -117,6 +117,25 @@ void ABRPlayerController::OnInteract(const FInputActionValue& InputActionValue) 
 	OwningCharacter->OnTryInteract();
 }
 
+void ABRPlayerController::OnCrouch(const FInputActionValue& InputActionValue) const
+{
+	if (InputActionValue.Get<bool>())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Crouch"));
+		OwningCharacter->Crouch();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Uncrouch"));
+		OwningCharacter->UnCrouch();
+	}
+}
+
+void ABRPlayerController::OnSprint(const FInputActionValue& InputActionValue) const
+{
+	OwningCharacter->OnSprint(InputActionValue);
+}
+
 
 // void ABRPlayerController::OnCreateSession_Debug()
 // {

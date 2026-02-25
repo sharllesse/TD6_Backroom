@@ -6,6 +6,7 @@
 #include "EventBus.h"
 #include "ActorComponent/InteractionComponent.h"
 #include "Character/BRCharacterGameplayTags.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameState/BRGameGameState.h"
 
 ABRPlayerCharacter::ABRPlayerCharacter()
@@ -29,6 +30,9 @@ void ABRPlayerCharacter::BeginPlay()
 		UEventBus::LockSignature<const FTransform&>(this, Character_Callback_OnPlayerMove);
 	}
 
+	GetCharacterMovement()->MaxWalkSpeed = PlayerData->WalkSpeed;
+	GetCharacterMovement()->MaxAcceleration = PlayerData->WalkSpeed * PlayerData->AccelerationModifier;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = PlayerData->CrouchSpeed;
 
 }
 
@@ -82,4 +86,20 @@ void ABRPlayerCharacter::OnMove(const FInputActionValue& InputActionValue)
 void ABRPlayerCharacter::OnJump(const FInputActionValue& InputActionValue)
 {
 	Jump();
+}
+
+void ABRPlayerCharacter::OnSprint(const FInputActionValue& InputActionValue) const
+{
+	if(InputActionValue.Get<bool>() && !IsCrouched())
+	{
+		PlayerData->bIsSprinting = true;
+		GetCharacterMovement()->MaxWalkSpeed = PlayerData->SprintSpeed;
+		GetCharacterMovement()->MaxAcceleration = PlayerData->SprintSpeed * PlayerData->AccelerationModifier;
+	}
+	else
+	{
+		PlayerData->bIsSprinting = false;
+		GetCharacterMovement()->MaxWalkSpeed = PlayerData->WalkSpeed;
+		GetCharacterMovement()->MaxAcceleration = PlayerData->WalkSpeed * PlayerData->AccelerationModifier;
+	}
 }

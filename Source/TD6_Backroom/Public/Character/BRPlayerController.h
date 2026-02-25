@@ -67,6 +67,12 @@ protected:
 	
 	UFUNCTION()
 	void OnInteract(const FInputActionValue& InputActionValue) const;
+	
+	UFUNCTION()
+	void OnCrouch(const FInputActionValue& InputActionValue) const;
+	
+	UFUNCTION()
+	void OnSprint(const FInputActionValue& InputActionValue) const;
 // 	UFUNCTION(BlueprintCallable)
 // 	void OnCreateSession_Debug();
 // private:
