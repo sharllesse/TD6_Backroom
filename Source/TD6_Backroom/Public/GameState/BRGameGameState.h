@@ -26,6 +26,9 @@ protected:
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastNotifyItemAdded(const FItemData& NewItem);
 public:
 	void AddItem(const FItemData& NewItem);
 	void RemoveItem(const FItemData& NewItem);

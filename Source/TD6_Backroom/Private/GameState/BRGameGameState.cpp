@@ -32,6 +32,11 @@ void ABRGameGameState::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	
 }
 
+void ABRGameGameState::MulticastNotifyItemAdded_Implementation(const FItemData& NewItem)
+{
+	UEventBus::Broadcast<const FItemData&>(this, Item_Callback_OnItemPickUp, NewItem);
+}
+
 void ABRGameGameState::AddItem(const FItemData& NewItem)
 {
 	for (auto& Item : SharedInventory)
@@ -39,13 +44,14 @@ void ABRGameGameState::AddItem(const FItemData& NewItem)
 		if (Item == NewItem)
 		{
 			Item.Count += NewItem.Count;
-			UEventBus::Broadcast<const FItemData&>(this, Item_Callback_OnItemPickUp, NewItem);
+			MulticastNotifyItemAdded(Item);
 			return;
 		}
 	}
 
 	SharedInventory.Add(NewItem);
-	UEventBus::Broadcast<const FItemData&>(this, Item_Callback_OnItemPickUp, NewItem);
+	MulticastNotifyItemAdded(NewItem);
+	
 }
 
 void ABRGameGameState::RemoveItem(const FItemData& NewItem)

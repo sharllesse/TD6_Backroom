@@ -24,12 +24,7 @@ void UInGameUI::NativeConstruct()
 	{
 		if (Item.Type == Item_VHS)
 		{
-			int CurrentVHs{0};
-			Chain::Execute(GetWorld()->GetGameState<ABRGameGameState>(), [&](const ABRGameGameState* GameState)
-			{
-				CurrentVHs = FMath::Min(GameState->GetItem(Item.Type)->Count, MaxVHS);
-			});
-			
+			int CurrentVHs{FMath::Min(Item.Count, MaxVHS)};
 			auto Text = FText::FromString(FString::Printf(TEXT("%d/%d VHS"), CurrentVHs, MaxVHS));
 			VHSText->SetText(Text);
 		}
