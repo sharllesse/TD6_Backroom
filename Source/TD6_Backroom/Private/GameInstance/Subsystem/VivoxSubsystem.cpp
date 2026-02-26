@@ -166,11 +166,14 @@ void UVivoxSubsystem::JoinVocalRoom()
 		return;
 	}
 		
-	ChannelId NewChannelId(TokenIssuer, FormatChannelSessionName(*SessionName), Domain, ChannelType::Positional);
+	Channel3DProperties Properties(8000,500,1.f, EAudioFadeModel::InverseByDistance);
+	
+	ChannelId NewChannelId(TokenIssuer, FormatChannelSessionName(*SessionName), Domain, ChannelType::Positional, Properties);
 	IChannelSession& NewChannelSession(LoginSession->GetChannelSession(NewChannelId));
 
 	IChannelSession::FOnBeginConnectCompletedDelegate OnBeginConnectCompleted;
-
+	
+	
 	OnBeginConnectCompleted.BindLambda([this, &NewChannelSession](VivoxCoreError Error)
 	{
 		if (VxErrorSuccess == Error)
