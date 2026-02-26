@@ -48,15 +48,6 @@ void ABRPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void ABRPlayerCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	Chain::Execute(GetWorld()->GetGameState<ABRGameGameState>(), [&](ABRGameGameState* GameState)
-			{
-				for (int i = 0; i < GameState->GetSharedInventory().Num(); ++i)
-				{
-					const auto& Item = GameState->GetSharedInventory()[i];
-					GEngine->AddOnScreenDebugMessage(i, 2.f, FColor::Red,
-						FString::Printf(TEXT("Item %d : name %s, count %d"), i, *Item.Name, Item.Count) );
-				}
-			});
 }
 
 void ABRPlayerCharacter::OnTryInteract() const
