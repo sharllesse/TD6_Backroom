@@ -68,3 +68,8 @@ void APickableItem::OnInteract(AActor* InInstigator)
 	Destroy();
 }
 
+FText APickableItem::GetInteractText() const
+{
+	return FText::FromString(TEXT("Collect"));
+}
+

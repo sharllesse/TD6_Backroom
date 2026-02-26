@@ -5,6 +5,4 @@
 #include "CoreMinimal.h"
 #include "NativeGameplayTags.h"
 
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_VHS);
-
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Callback_OnItemPickUp)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameState_Callback_OnObjectivesCompleted);

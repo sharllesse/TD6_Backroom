@@ -4,13 +4,41 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "EventBus.h"
+#include "GameState/BRGameStateGameplayTags.h"
 #include "Online/BROnlineGameTags.h"
+#include "UI/UIManagerSubsystem.h"
+#include "UI/InGameUI.h"
 
 
 void ABRPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	 
+	
+
+	if (IsLocalController())
+	{
+		SetupLocalInfo();
+	}
+	
+
+
+	UEventBus::AddLambda(this, GameState_Callback_OnObjectivesCompleted, []
+	{
+		GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Red, TEXT("All vhs collected."));
+	});
+	
+	//UEventBus::AddUObject(this, Online_Callback_OnExternalUIChange, this, &ABRPlayerController::OnExternalUIChange);
+}
+
+void ABRPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+}
+
+void ABRPlayerController::SetupLocalInfo()
+{
 	SetInputMode(FInputModeGameOnly());
 	bShowMouseCursor = false; 
 	
@@ -28,15 +56,19 @@ void ABRPlayerController::BeginPlay()
 			bShowMouseCursor = false; 
 		}
 	});
-	
-	
-	//UEventBus::AddUObject(this, Online_Callback_OnExternalUIChange, this, &ABRPlayerController::OnExternalUIChange);
-}
 
-void ABRPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	Super::EndPlay(EndPlayReason);
-
+	InGameUI = GetLocalPlayer()->GetSubsystem<UUIManagerSubsystem>()->CreateWidget<UInGameUI>();
+	OwningCharacter->SetNotifyInteractCallback([this](bool bCanInteract,const IInteractable* Interactable)
+	{
+		if (Interactable)
+		{
+			InGameUI->SetCanInteract(bCanInteract, Interactable->GetInteractText());
+		}
+		else
+		{
+			InGameUI->SetCanInteract(bCanInteract, FText::FromString(TEXT("")));
+		}
+	});
 }
 
 void ABRPlayerController::SetupInputComponent()

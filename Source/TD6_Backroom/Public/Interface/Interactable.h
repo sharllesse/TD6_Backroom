@@ -25,4 +25,6 @@ public:
 	virtual void OnBeginFocus();
 	virtual void OnEndFocus();
 	virtual void OnInteract(AActor* Instigator);
+
+	virtual FText GetInteractText() const;
 };

@@ -9,6 +9,7 @@
 #include "Character/BRPlayerCharacter.h"
 #include "BRPlayerController.generated.h"
 
+class UInGameUI;
 class UCreateRoomWidget;
 class UMainMenuWidget;
 
@@ -43,11 +44,16 @@ protected:
 	TArray<FAction> InputActions;
 
 	TWeakObjectPtr<ABRPlayerCharacter> OwningCharacter;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UInGameUI> InGameUI;
 	
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	void SetupLocalInfo();
 	
 	virtual void SetupInputComponent() override;
 

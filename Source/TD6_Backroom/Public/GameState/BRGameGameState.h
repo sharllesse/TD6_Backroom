@@ -20,10 +20,27 @@ protected:
 	UPROPERTY(Replicated)
 	TArray<FItemData> SharedInventory;
 
+
+
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 public:
 	void AddItem(const FItemData& NewItem);
 	void RemoveItem(const FItemData& NewItem);
 	void ClearInventory();
-	const TArray<FItemData>& GetSharedInventory();
+	TOptional<FItemData> GetItem(const FGameplayTag& Tag) const;
+	const TArray<FItemData>& GetSharedInventory() const;
+	
+	UPROPERTY(Replicated)
+	int VhsToCollect{0};
+	
+	UPROPERTY(ReplicatedUsing = "OnObjectivesCompleted_Rep")
+	bool bAllObjectiveIsCompleted{false};
+
+	
+	UFUNCTION()
+	void OnObjectivesCompleted_Rep() const;
+	
 };

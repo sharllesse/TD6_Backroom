@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "ActorComponent/InteractionComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameInstance/Subsystem/VivoxSubsystem.h"
@@ -61,6 +62,12 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	virtual void Tick(float DeltaSeconds) override;
+
+	template<typename Func>
+	void SetNotifyInteractCallback(Func&& Callback)
+	{
+		InteractionComponent->NotifyCanInteractEvent.BindLambda(Forward<Func>(Callback));
+	}
 protected:
 	void OnMove(const FInputActionValue& InputActionValue);
 
@@ -72,3 +79,4 @@ protected:
 
 	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
 };
+

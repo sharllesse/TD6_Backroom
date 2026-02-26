@@ -34,4 +34,5 @@ public:
 	virtual void OnBeginFocus() override;
 	virtual void OnEndFocus() override;
 	virtual void OnInteract(AActor* InInstigator) override;
+	virtual FText GetInteractText() const;
 };

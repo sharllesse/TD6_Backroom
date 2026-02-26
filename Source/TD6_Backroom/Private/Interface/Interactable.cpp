@@ -16,3 +16,8 @@ void IInteractable::OnEndFocus()
 void IInteractable::OnInteract(AActor* Instigator)
 {
 }
+
+FText IInteractable::GetInteractText() const
+{
+	return FText::FromString(TEXT("Interact"));
+}
