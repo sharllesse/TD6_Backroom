@@ -73,7 +73,12 @@ protected:
 
 	void OnJump(const FInputActionValue& InputActionValue);
 
-	void OnSprint(const FInputActionValue& InputActionValue) const;
+	void OnSprint(const FInputActionValue& InputActionValue);
+	
+	UFUNCTION(Server, Reliable)
+	void Server_OnSprint(bool bWantSprint);
+	
+	void UpdateSprintState(bool bShouldSprint);
 	
 	void OnTryInteract() const;
 

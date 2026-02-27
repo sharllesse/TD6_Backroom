@@ -29,9 +29,15 @@ void UItemDataTable::Init(UWorld* WorldContext)
 	if (!WorldContext)
 		return;
 
+	UE_LOG(LogTemp, Verbose, TEXT("Loading ItemDataTable"));
 	FString AssetPath = TEXT("/Game/Blueprint/Item/DA_ItemDataTable.DA_ItemDataTable");
 	
 	Self = TStrongObjectPtr(LoadObject<UItemDataTable>(WorldContext, AssetPath));
+
+	if (!Self)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Unable to load ItemDataTable"));
+	}
 }
 
 void UItemDataTable::Destroy()

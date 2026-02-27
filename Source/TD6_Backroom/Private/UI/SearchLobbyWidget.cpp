@@ -32,8 +32,6 @@ void USearchLobbyWidget::OnSessionsFind(const TArray<FOnlineSessionSearchResult>
 {
 	if (!bWasSuccessful)
 		return;
-
-	UE_LOG(LogTemp, Error, TEXT("On session Find"));
 	
 	RoomsInfo.Empty();
 	RoomScrollBox->ClearChildren();	

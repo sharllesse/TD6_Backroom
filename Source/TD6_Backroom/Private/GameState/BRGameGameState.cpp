@@ -78,8 +78,7 @@ const TArray<FItemData>& ABRGameGameState::GetSharedInventory() const
 }
 
 void ABRGameGameState::OnObjectivesCompleted_Rep() const
-{
-	UE_LOG(LogTemp,Error, TEXT("All vhs collected!"));
+{ 
 	if (bAllObjectiveIsCompleted)
 	{
 		UEventBus::Broadcast(this, GameState_Callback_OnObjectivesCompleted);

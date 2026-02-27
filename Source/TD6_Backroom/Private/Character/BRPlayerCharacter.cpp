@@ -50,6 +50,8 @@ void ABRPlayerCharacter::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 }
 
+
+
 void ABRPlayerCharacter::OnTryInteract() const
 {
 	if (InteractionComponent->CanInteract())
@@ -79,9 +81,26 @@ void ABRPlayerCharacter::OnJump(const FInputActionValue& InputActionValue)
 	Jump();
 }
 
-void ABRPlayerCharacter::OnSprint(const FInputActionValue& InputActionValue) const
+void ABRPlayerCharacter::OnSprint(const FInputActionValue& InputActionValue)
 {
-	if(InputActionValue.Get<bool>() && !IsCrouched())
+	if (!IsLocallyControlled())
+	{
+		return;
+	}
+
+	const bool bWantSprint = InputActionValue.Get<bool>() && !IsCrouched();
+	Server_OnSprint(bWantSprint);
+	UpdateSprintState(bWantSprint);
+}
+
+void ABRPlayerCharacter::Server_OnSprint_Implementation(bool bWantSprint)
+{
+	UpdateSprintState(bWantSprint);
+}
+
+void ABRPlayerCharacter::UpdateSprintState(bool bShouldSprint)
+{
+	if(bShouldSprint && !IsCrouched())
 	{
 		PlayerData->bIsSprinting = true;
 		GetCharacterMovement()->MaxWalkSpeed = PlayerData->SprintSpeed;

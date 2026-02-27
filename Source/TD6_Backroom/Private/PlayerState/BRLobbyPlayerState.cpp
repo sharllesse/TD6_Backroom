@@ -16,8 +16,7 @@ void ABRLobbyPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimePrope
 }
 
 void ABRLobbyPlayerState::OnRep_IsReady()
-{
-	UE_LOG(LogTemp, Error, TEXT("Update isready"))
+{ 
 	UEventBus::Broadcast(this, PlayerState_Callback_LobbyReadyChange, this , bIsReady);
 }
 
