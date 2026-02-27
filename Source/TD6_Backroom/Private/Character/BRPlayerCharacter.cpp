@@ -1,13 +1,10 @@
 // Copyright (c) Logicraft Interactive. All Rights Reserved.
 
 #include "Character/BRPlayerCharacter.h"
-
-#include "Chain.h"
 #include "EventBus.h"
 #include "ActorComponent/InteractionComponent.h"
 #include "Character/BRCharacterGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameState/BRGameGameState.h"
 
 ABRPlayerCharacter::ABRPlayerCharacter()
 {
