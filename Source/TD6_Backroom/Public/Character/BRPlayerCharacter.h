@@ -3,12 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
 #include "InputActionValue.h"
 #include "ActorComponent/InteractionComponent.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "GameInstance/Subsystem/VivoxSubsystem.h"
 #include "BRPlayerCharacter.generated.h"
 
 class UInteractionComponent;
