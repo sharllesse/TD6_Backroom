@@ -126,7 +126,6 @@ void UVivoxSubsystem::Join3DVocalRoom(const FString& SessionName)
 		{
 			UE_LOG(Log_BRVivox, Log, TEXT("InGame Channel %s fully disconnected\n"), *ChannelName);
 			bIsInVocalRoom = false;
-			UEventBus::Remove(this, Character_Callback_OnPlayerMove, OnLocalPlayerMove);
 		}
 		UEventBus::Broadcast<const IChannelConnectionState&>(this, GameInstance_Callback_OnVivoxChannelSessionStateChange, State);
 	});
@@ -286,6 +285,18 @@ void UVivoxSubsystem::SwitchTo3DRoom()
 				UE_LOG(Log_BRVivox, Verbose, TEXT("Switch to 3D room channel was successful"));
 			}
 		}));
+		
+		if (InGameChannelSession->AudioState() == ConnectionState::Connected)
+		{
+			InGameChannelSession->BeginSetAudioConnected(true, false, 
+				IChannelSession::FOnBeginSetAudioConnectedCompletedDelegate::CreateLambda([](VivoxCoreError Error)
+			{
+				if (VxErrorSuccess == Error)
+				{
+					UE_LOG(Log_BRVivox, Verbose, TEXT("Switch to 2D room channel was successful"));
+				}
+			}));		
+		}
 	}
 }
 
@@ -308,8 +319,11 @@ void UVivoxSubsystem::SwitchTo2DRoom()
 			{
 				UE_LOG(Log_BRVivox, Verbose, TEXT("Switch to 2D room channel was successful"));
 			}
-		}));
-		
+		}));		
+	}
+	
+	if (LobbyChannelSession->AudioState() == ConnectionState::Connected)
+	{
 		LobbyChannelSession->BeginSetAudioConnected(true, false, 
 			IChannelSession::FOnBeginSetAudioConnectedCompletedDelegate::CreateLambda([](VivoxCoreError Error)
 		{
