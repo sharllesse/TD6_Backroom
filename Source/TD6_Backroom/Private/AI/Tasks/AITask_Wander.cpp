@@ -22,6 +22,11 @@ void UAITask_Wander::Activate()
 	
 	QueryFinishedSignature = FQueryFinishedSignature::CreateUObject(this, &UAITask_Wander::OnQueryRequestFinished);
 	CachedQueryID = EQSRequest->Execute(*GetAIController(), BlackboardComponent, QueryFinishedSignature);
+
+	if (CachedQueryID == INDEX_NONE)
+	{
+		FinishFailedTask();
+	}
 }
 
 void UAITask_Wander::Clean()
@@ -64,9 +69,9 @@ void UAITask_Wander::OnQueryRequestFinished(TSharedPtr<FEnvQueryResult> QueryRes
 		GoalActor.Set<FVector>(QueryResult->GetItemAsLocation(0));
 		PathFollowRequestResult = MoveToRequest->Execute(AiController, GoalActor, CachedMoveID);	
 	}
-
+	
 	if (PathFollowRequestResult == EPathFollowingRequestResult::AlreadyAtGoal)
-	{
+	{	
 		FinishTask();
 	}
 
