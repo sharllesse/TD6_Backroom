@@ -18,8 +18,8 @@ ABRPlayerCharacter::ABRPlayerCharacter()
 	CameraComponent->SetupAttachment(SpringArmComponent);
 
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("Interaction System"));
-	
 	GenericTeamId = 0;
+	StaminaComponent = CreateDefaultSubobject<UStaminaComponent>(TEXT("Stamina Component"));
 }
 
 void ABRPlayerCharacter::BeginPlay()
@@ -28,6 +28,17 @@ void ABRPlayerCharacter::BeginPlay()
 	if (IsLocallyControlled())
 	{
 		UEventBus::LockSignature<const FTransform&>(this, Character_Callback_OnPlayerMove);
+
+		StaminaComponent->OnCantSprint.BindLambda([this]
+		{
+			Server_OnSprint(false);
+			UpdateSprintState(false);
+		});
+		StaminaComponent->OnStaminaChange.BindLambda([this](float Current, float Max)
+		{
+			GEngine->AddOnScreenDebugMessage(0, 1.f, FColor::Red, FString::Printf(TEXT("%.2f/%.2f"),
+				Current,Max));
+		});
 	}
 
 	GetCharacterMovement()->MaxWalkSpeed = PlayerData->WalkSpeed;
@@ -97,7 +108,7 @@ void ABRPlayerCharacter::OnSprint(const FInputActionValue& InputActionValue)
 		return;
 	}
 
-	const bool bWantSprint = InputActionValue.Get<bool>() && !IsCrouched();
+	const bool bWantSprint = InputActionValue.Get<bool>() && !IsCrouched() && StaminaComponent->CanSprint();
 	Server_OnSprint(bWantSprint);
 	UpdateSprintState(bWantSprint);
 }
@@ -109,15 +120,17 @@ void ABRPlayerCharacter::Server_OnSprint_Implementation(bool bWantSprint)
 
 void ABRPlayerCharacter::UpdateSprintState(bool bShouldSprint)
 {
-	if(bShouldSprint && !IsCrouched())
+	if(bShouldSprint)
 	{
 		PlayerData->bIsSprinting = true;
+		StaminaComponent->SetIsSprinting(true);
 		GetCharacterMovement()->MaxWalkSpeed = PlayerData->SprintSpeed;
 		GetCharacterMovement()->MaxAcceleration = PlayerData->SprintSpeed * PlayerData->AccelerationModifier;
 	}
 	else
 	{
 		PlayerData->bIsSprinting = false;
+		StaminaComponent->SetIsSprinting(false);
 		GetCharacterMovement()->MaxWalkSpeed = PlayerData->WalkSpeed;
 		GetCharacterMovement()->MaxAcceleration = PlayerData->WalkSpeed * PlayerData->AccelerationModifier;
 	}

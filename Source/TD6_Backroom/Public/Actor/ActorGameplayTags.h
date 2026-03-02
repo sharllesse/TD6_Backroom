@@ -5,4 +5,5 @@
 #include "CoreMinimal.h"
 #include "NativeGameplayTags.h"
 
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameMode_Callback_OnAllPlayerInExitZone);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Actor_ExitZone_Callback_OnPlayerEnter);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Actor_ExitZone_Callback_OnPlayerLeave);

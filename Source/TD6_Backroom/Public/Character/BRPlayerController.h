@@ -22,7 +22,7 @@ struct FAction
 	TObjectPtr<UInputAction> Action;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	ETriggerEvent TriggerEvent;
+	ETriggerEvent TriggerEvent{ETriggerEvent::Triggered};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FName FunctionName;

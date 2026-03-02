@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
 #include "ActorComponent/InteractionComponent.h"
+#include "ActorComponent/StaminaComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "BRPlayerCharacter.generated.h"
@@ -56,6 +57,9 @@ protected:
 	TObjectPtr<UBRPlayerData> PlayerData;
 
 	FGenericTeamId GenericTeamId;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	TObjectPtr<UStaminaComponent> StaminaComponent;
 public:
 	// Sets default values for this character's properties
 	ABRPlayerCharacter();

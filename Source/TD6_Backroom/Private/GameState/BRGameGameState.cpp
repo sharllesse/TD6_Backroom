@@ -6,6 +6,7 @@
 #include "Chain.h"
 #include "EventBus.h"
 #include "Linq.h"
+#include "GameMode/BRGameModeGameplayTags.h"
 #include "GameState/BRGameStateGameplayTags.h"
 #include "Items/BRItemGameplayTag.h"
 #include "Net/UnrealNetwork.h"
@@ -83,4 +84,9 @@ void ABRGameGameState::OnObjectivesCompleted_Rep() const
 	{
 		UEventBus::Broadcast(this, GameState_Callback_OnObjectivesCompleted);
 	}
+}
+
+void ABRGameGameState::MulticastNotifyAllPlayerAreInExitZone_Implementation()
+{
+	UEventBus::Broadcast(this, GameMode_Callback_OnAllPlayerInExitZone);
 }

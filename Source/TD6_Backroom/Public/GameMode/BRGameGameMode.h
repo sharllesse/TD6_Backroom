@@ -3,7 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/GameModeBase.h"
+#include "Utils/EventBusDelegateHandler.h"
 #include "BRGameGameMode.generated.h"
 
 /**
@@ -19,13 +21,17 @@ class TD6_BACKROOM_API ABRGameGameMode : public AGameModeBase
 
 	int VhsToCollect{0};
 	bool bHasAllVhs{false};
-	FDelegateHandle UpdateVhsStateDelegate;
+	int CurrentPlayerNumberInExitZone{0};
+	bool bAllPlayerAreInExitZone{false};
+	
+	EventBusDelegateHandler DelegateHandler;
 
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	void CheckIfHasAllVhs();
+	void CheckIfAllPlayerAreInExitZone();
 public:
 
 	int GetVhsObjective() const;

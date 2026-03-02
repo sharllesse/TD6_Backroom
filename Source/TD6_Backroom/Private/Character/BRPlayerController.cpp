@@ -4,6 +4,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "EventBus.h"
+#include "GameMode/BRGameModeGameplayTags.h"
 #include "GameState/BRGameStateGameplayTags.h"
 #include "Online/BROnlineGameTags.h"
 #include "UI/UIManagerSubsystem.h"
@@ -27,6 +28,12 @@ void ABRPlayerController::BeginPlay()
 	{
 		GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Red, TEXT("All vhs collected."));
 	});
+
+	UEventBus::AddLambda(this, GameMode_Callback_OnAllPlayerInExitZone, []
+		{
+			GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Red, TEXT("All player in exit zone."));
+		});
+	
 	
 	//UEventBus::AddUObject(this, Online_Callback_OnExternalUIChange, this, &ABRPlayerController::OnExternalUIChange);
 }

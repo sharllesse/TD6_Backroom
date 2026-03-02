@@ -5,6 +5,7 @@
 
 #include "Chain.h"
 #include "EventBus.h"
+#include "Actor/ActorGameplayTags.h"
 #include "GameMode/BRGameModeGameplayTags.h"
 #include "GameState/BRGameGameState.h"
 #include "Items/BRItemGameplayTag.h"
@@ -20,17 +21,28 @@ void ABRGameGameMode::BeginPlay()
 		Game->VhsToCollect = VhsToCollect;
 	});
 	
-	UpdateVhsStateDelegate = UEventBus::AddLambda(this, Item_Callback_OnItemPickUp, [this](const FItemData& Item)
+	DelegateHandler.AddDelegate(this, Item_Callback_OnItemPickUp, [this](const FItemData& Item)
 	{
 		if (Item.Type.MatchesTagExact(Item_VHS))
 			CheckIfHasAllVhs();		
+	});
+
+	DelegateHandler.AddDelegate(this, Actor_ExitZone_Callback_OnPlayerEnter, [this](AActor* Player)
+	{
+		++CurrentPlayerNumberInExitZone;
+		CheckIfAllPlayerAreInExitZone();
+	});
+
+	DelegateHandler.AddDelegate(this, Actor_ExitZone_Callback_OnPlayerLeave, [this](AActor* Player)
+	{
+		--CurrentPlayerNumberInExitZone;
 	});
 }
 
 void ABRGameGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
-	UEventBus::Remove(this, Item_Callback_OnItemPickUp, UpdateVhsStateDelegate);
+	DelegateHandler.Clear(this);
 }
 
 void ABRGameGameMode::CheckIfHasAllVhs()
@@ -52,6 +64,24 @@ void ABRGameGameMode::CheckIfHasAllVhs()
 			}
 		}
 	});
+}
+
+void ABRGameGameMode::CheckIfAllPlayerAreInExitZone()
+{
+	if (bAllPlayerAreInExitZone)
+	{
+		return;
+	}
+	
+	Chain::Execute(GetGameState<ABRGameGameState>(), [this](ABRGameGameState* Game)
+	{
+		if (CurrentPlayerNumberInExitZone >= Game->PlayerArray.Num())
+		{
+			bAllPlayerAreInExitZone = true;
+			Game->MulticastNotifyAllPlayerAreInExitZone();
+		}
+	});
+	
 }
 
 int ABRGameGameMode::GetVhsObjective() const

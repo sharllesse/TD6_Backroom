@@ -29,6 +29,7 @@ protected:
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastNotifyItemAdded(const FItemData& NewItem);
+
 public:
 	void AddItem(const FItemData& NewItem);
 	void RemoveItem(const FItemData& NewItem);
@@ -46,4 +47,6 @@ public:
 	UFUNCTION()
 	void OnObjectivesCompleted_Rep() const;
 	
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastNotifyAllPlayerAreInExitZone();
 };
