@@ -3,27 +3,52 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AIController.h"
-#include "GenericTeamAgentInterface.h"
 #include "AI/AICharacter_Base.h"
 #include "AICharacter_Bacteria.generated.h"
 
 UCLASS()
-class TD6_BACKROOM_API AAICharacter_Bacteria : public AAICharacter_Base, public IGenericTeamAgentInterface
+class UBRBacteriaData : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float WalkSpeed{250.f};
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float SprintSpeed{500.f};
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float AccelerationModifier{8.f};
+
+	UPROPERTY(BlueprintReadWrite, Category = "Movement")
+	bool bIsSprinting{false};
+};
+
+class AAIController_Bacteria;
+
+UCLASS()
+class TD6_BACKROOM_API AAICharacter_Bacteria : public AAICharacter_Base
+{
+	GENERATED_BODY()
+
+	friend AAIController_Bacteria;
+	
 protected:
-	TWeakObjectPtr<AAIController> AIController;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UBRBacteriaData> BacteriaData;
+
+	float MaxVHSpeed{ 0.f };
+
+	FDelegateHandle Handle;
 	
 public:
 	AAICharacter_Bacteria();
 
-	virtual void SetGenericTeamId(const FGenericTeamId& TeamID) override;
-	virtual FGenericTeamId GetGenericTeamId() const override;
-
-	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
-
 protected:
 	virtual void BeginPlay() override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	void UpdateSprintState(bool bShouldSprint);
 };
