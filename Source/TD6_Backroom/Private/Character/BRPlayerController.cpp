@@ -38,13 +38,14 @@ void ABRPlayerController::BeginPlay()
 			GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Red, TEXT("All player in exit zone."));
 		});
 	
-	
-	
-	VivoxSubsystem = GetGameInstance()->GetSubsystem<UVivoxSubsystem>();
-	if (VivoxSubsystem.IsValid())
+	if (IsLocalController())
 	{
-		UE_LOG(Log_BRVivox, Error, TEXT("Switching to 3d room"))
-		VivoxSubsystem->SwitchTo3DRoom();	
+		VivoxSubsystem = GetGameInstance()->GetSubsystem<UVivoxSubsystem>();
+		if (VivoxSubsystem.IsValid())
+		{
+			UE_LOG(Log_BRVivox, Error, TEXT("Switching to 3d room"))
+			VivoxSubsystem->SwitchTo3DRoom();	
+		}
 	}
 	//UEventBus::AddUObject(this, Online_Callback_OnExternalUIChange, this, &ABRPlayerController::OnExternalUIChange);
 }
@@ -58,14 +59,17 @@ void ABRPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void ABRPlayerController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	if (!VivoxSubsystem.IsValid())
+	if (IsLocalController())
 	{
-		VivoxSubsystem = GetGameInstance()->GetSubsystem<UVivoxSubsystem>();
-	}
+		if (!VivoxSubsystem.IsValid())
+		{
+			VivoxSubsystem = GetGameInstance()->GetSubsystem<UVivoxSubsystem>();
+		}
 	
-	if (VivoxSubsystem.IsValid() && IsValid(GetPawn()))
-	{
-		VivoxSubsystem->Set3DPosition(GetPawn()->GetActorLocation(), GetPawn()->GetActorForwardVector(), GetPawn()->GetActorUpVector());	
+		if (VivoxSubsystem.IsValid() && IsValid(GetPawn()))
+		{
+			VivoxSubsystem->Set3DPosition(GetPawn()->GetActorLocation(), GetPawn()->GetActorForwardVector(), GetPawn()->GetActorUpVector());	
+		}
 	}
 }
 
