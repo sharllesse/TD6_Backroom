@@ -27,7 +27,7 @@ public:
 	template<typename TAITask>
 	static TAITask* Create(AAIController& AIOwner, IGameplayTaskOwnerInterface& InTaskOwner)
 	{
-		if (TAITask* NewTask{ NewAITask<TAITask>(AIOwner, InTaskOwner) })
+		if (TAITask* NewTask{ NewAITask<TAITask>(AIOwner, InTaskOwner, TEXT("Behavior")) })
 		{
 			return NewTask;
 		}

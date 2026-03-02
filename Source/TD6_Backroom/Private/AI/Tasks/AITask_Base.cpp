@@ -10,12 +10,16 @@ bool UAITask_Base::HasFailed() const
 
 void UAITask_Base::FinishTask()
 {
+	UE_LOG(LogTemp, Warning, TEXT("Task Success"))
+	
 	ExternalCancel();
 	Clean();
 }
 
 void UAITask_Base::FinishFailedTask()
 {
+	UE_LOG(LogTemp, Warning, TEXT("Task Failed"))
+	
 	bHasFailed = true;
 	
 	ExternalCancel();

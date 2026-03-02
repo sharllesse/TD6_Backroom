@@ -6,6 +6,8 @@ UBTTask_Wander::UBTTask_Wander(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	NodeName = "Wander";
+
+	INIT_TASK_NODE_NOTIFY_FLAGS();
 }
 
 void UBTTask_Wander::InitializeFromAsset(UBehaviorTree& Asset)
@@ -28,12 +30,12 @@ EBTNodeResult::Type UBTTask_Wander::ExecuteTask(UBehaviorTreeComponent& OwnerCom
 		WanderAiTask->EQSRequest = &EQSRequest;
 		WanderAiTask->MoveToRequest = &MoveToRequest;
 
-		WanderAiTask->Activate();
+		WanderAiTask->ReadyForActivation();
 
 		FBTWanderTaskMemory* TaskMemory{ CastNodeMemory(NodeMemory) };
 		TaskMemory->WanderTask = WanderAiTask;
 		TaskMemory->bIsInitialized = true;
-
+		
 		return EBTNodeResult::InProgress;
 	}
 	
