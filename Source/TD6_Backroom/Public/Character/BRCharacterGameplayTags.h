@@ -6,3 +6,5 @@
 #include "NativeGameplayTags.h"
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_Callback_OnPlayerMove);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_Callback_OnPlayerSwitchSpectate)

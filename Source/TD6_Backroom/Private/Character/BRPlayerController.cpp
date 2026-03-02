@@ -4,6 +4,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "EventBus.h"
+#include "GameFramework/PlayerState.h"
 #include "GameMode/BRGameModeGameplayTags.h"
 #include "GameState/BRGameStateGameplayTags.h"
 #include "Online/BROnlineGameTags.h"
@@ -65,7 +66,7 @@ void ABRPlayerController::SetupLocalInfo()
 	});
 
 	InGameUI = GetLocalPlayer()->GetSubsystem<UUIManagerSubsystem>()->CreateWidget<UInGameUI>();
-	OwningCharacter->SetNotifyInteractCallback([this](bool bCanInteract,const IInteractable* Interactable)
+	GameCharacter->SetNotifyInteractCallback([this](bool bCanInteract,const IInteractable* Interactable)
 	{
 		if (Interactable)
 		{
@@ -84,7 +85,12 @@ void ABRPlayerController::SetupInputComponent()
 	
 	if (UEnhancedInputComponent* Input = Cast<UEnhancedInputComponent>(InputComponent))
 	{
-		for (FAction& InputAction : InputActions)
+		for (FAction& InputAction : GameInputActions)
+		{
+			Input->BindAction(InputAction.Action, InputAction.TriggerEvent, this, InputAction.FunctionName);
+		}
+		
+		for (FAction& InputAction : SpectatorInputActions)
 		{
 			Input->BindAction(InputAction.Action, InputAction.TriggerEvent, this, InputAction.FunctionName);
 		}
@@ -99,43 +105,101 @@ void ABRPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	OwningCharacter = Cast<ABRPlayerCharacter>(InPawn);
-
+	UE_LOG(LogTemp, Error, TEXT("OnPossess"))
 	if (IsLocalPlayerController())
 	{
-		SetupInputMappingContext();
+		if (auto IsGameCharacter = Cast<ABRPlayerCharacter>(InPawn))
+		{
+			GameCharacter = IsGameCharacter;
+			SwitchMappingContext(NAME_Playing);
+		}
+		else if (auto IsSpectatorCharacter = Cast<ABRSpectatorPawn>(InPawn))
+		{
+			CustomSpectatorPawn = IsSpectatorCharacter;
+			SwitchMappingContext(NAME_Spectating);
+		}
 	}
+	
 }
 
 void ABRPlayerController::OnRep_Pawn()
 {
 	Super::OnRep_Pawn();
 
-	OwningCharacter = Cast<ABRPlayerCharacter>(GetPawn());
-	
-	SetupInputMappingContext();	
+	UE_LOG(LogTemp, Error, TEXT("OnRep_Pawn"))
+	if (IsLocalPlayerController())
+	{
+		if (auto IsGameCharacter = Cast<ABRPlayerCharacter>(GetPawn()))
+		{
+			UE_LOG(LogTemp, Error, TEXT("Possessing Game Pawn"))
+			GameCharacter = IsGameCharacter;
+			SwitchMappingContext(NAME_Playing);
+		}
+		else if (auto IsSpectatorCharacter = Cast<ABRSpectatorPawn>(GetSpectatorPawn()))
+		{
+			UE_LOG(LogTemp, Error, TEXT("Possessing Spectator Pawn"))
+			CustomSpectatorPawn = IsSpectatorCharacter;
+			SwitchMappingContext(NAME_Spectating);
+		}
+	}
 }
 
-void ABRPlayerController::SetupInputMappingContext()
+void ABRPlayerController::AcknowledgePossession(class APawn* P)
+{
+	Super::AcknowledgePossession(P);
+	UE_LOG(LogTemp, Error, TEXT("AcknowledgePossession"))
+	if (IsLocalPlayerController())
+	{
+		if (auto IsGameCharacter = Cast<ABRPlayerCharacter>(P))
+		{
+			GameCharacter = IsGameCharacter;
+			SwitchMappingContext(NAME_Playing);
+		}
+		else if (auto IsSpectatorCharacter = Cast<ABRSpectatorPawn>(P))
+		{
+			CustomSpectatorPawn = IsSpectatorCharacter;
+			SwitchMappingContext(NAME_Spectating);
+		}
+	}
+}
+
+
+void ABRPlayerController::SwitchMappingContext(const FName& Name)
 {
 	if (ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(Player))
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* InputSystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
 		{
-			if (InputMappingContext)
+			InputSystem->ClearAllMappings();
+			if (Name == NAME_Playing)
 			{
-				InputSystem->AddMappingContext(InputMappingContext, 0);
-				return;
-			}
+				if (GameMappingContext)
+				{
+					InputSystem->AddMappingContext(GameMappingContext, 0);
+					UE_LOG(LogTemp, Error, TEXT("Switching to Game mapping context"))
+					return;
+				}
 
-			UE_LOG(LogTemp, Error, TEXT("ABRPlayerController: The mapping context cannot be null."))
+				UE_LOG(LogTemp, Error, TEXT("ABRPlayerController: The mapping context cannot be null."))
+			}
+			else if (Name == NAME_Spectating)
+			{
+				if (SpectatorMappingContext)
+				{
+					InputSystem->AddMappingContext(SpectatorMappingContext, 0);
+					UE_LOG(LogTemp, Error, TEXT("Switching to Spectator mapping context"))
+					return;
+				}
+
+				UE_LOG(LogTemp, Error, TEXT("ABRPlayerController: The mapping context cannot be null."))
+			}
 		}
 	}
 }
 
 void ABRPlayerController::OnMove(const FInputActionValue& InputActionValue) const
 {
-	OwningCharacter->OnMove(InputActionValue);
+	GameCharacter->OnMove(InputActionValue);
 }
 
 void ABRPlayerController::OnLook(const FInputActionValue& InputActionValue)
@@ -148,58 +212,91 @@ void ABRPlayerController::OnLook(const FInputActionValue& InputActionValue)
 
 void ABRPlayerController::OnJump(const FInputActionValue& InputActionValue) const
 {
-	OwningCharacter->OnJump(InputActionValue);
+	GameCharacter->OnJump(InputActionValue);
 }
 
 void ABRPlayerController::OnInteract(const FInputActionValue& InputActionValue) const
 {
-	OwningCharacter->OnTryInteract();
+	GameCharacter->OnTryInteract();
 }
 
 void ABRPlayerController::OnCrouch(const FInputActionValue& InputActionValue) const
 {
 	if (InputActionValue.Get<bool>())
 	{ 
-		OwningCharacter->Crouch();
+		GameCharacter->Crouch();
 	}
 	else
 	{ 
-		OwningCharacter->UnCrouch();
+		GameCharacter->UnCrouch();
 	}
 }
 
 void ABRPlayerController::OnSprint(const FInputActionValue& InputActionValue) const
 {
-	OwningCharacter->OnSprint(InputActionValue);
+	GameCharacter->OnSprint(InputActionValue);
+}
+
+void ABRPlayerController::OnNextSpectate(const FInputActionValue& InputActionValue)
+{
+	if (!IsLocalController())
+		return;
+	
+	UE_LOG(LogTemp, Error, TEXT("Next spectate"))
+	
+	if (InputActionValue.Get<bool>())
+	{
+		Chain::Execute(CustomSpectatorPawn.Get(), [](ABRSpectatorPawn* SpecPawn)
+		{
+			SpecPawn->SpectateNextPlayer(ABRSpectatorPawn::IterationMethode::Next);
+		});
+	}
+	else
+	{
+		Chain::Execute(CustomSpectatorPawn.Get(), [](ABRSpectatorPawn* SpecPawn)
+		{
+			SpecPawn->SpectateNextPlayer(ABRSpectatorPawn::IterationMethode::Previous);
+		});
+	}
 }
 
 
-// void ABRPlayerController::OnCreateSession_Debug()
-// {
-// 	UBROnlineSubsystem::Get(GetWorld())->CreateSession();
-// }
+void ABRPlayerController::Client_SwitchToSpectator_Implementation()
+{
+	UE_LOG(LogTemp, Error, TEXT("Switching to Spectator client"))
+	GameCharacter = nullptr;
+	ChangeState(NAME_Spectating);
 
-// void ABRPlayerController::OnExternalUIChange(bool bIsOpening)
-// {
-// 	FlushPressedKeys();
-// 	
-// 	if (bIsOpening)
-// 	{
-// 		bShowMouseCursor = true;
-// 		bEnableClickEvents = true;
-// 		bEnableMouseOverEvents = true;
-//
-// 		FInputModeUIOnly InputMode;
-// 		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-// 		SetInputMode(InputMode);
-// 	}
-// 	else
-// 	{
-// 		bShowMouseCursor = false;
-// 		bEnableClickEvents = false;
-// 		bEnableMouseOverEvents = false;
-//
-// 		FInputModeGameOnly InputMode;
-// 		SetInputMode(InputMode);
-// 	}
-// }
+	if (HasAuthority())
+		OnRep_Pawn();
+}
+
+void ABRPlayerController::Server_SwitchToSpectator_Implementation()
+{
+	
+	UE_LOG(LogTemp, Error, TEXT("Switching to Spectator server"))
+	
+	if (auto DyingPawn = Cast<ABRPlayerCharacter>(GetPawn()))
+	{
+		DyingPawn->EnableRagdoll();
+	}
+
+	
+	UnPossess();
+	if (PlayerState)
+	{
+		PlayerState->SetIsSpectator(true);
+	}
+
+	ClientGotoState(NAME_Spectating);
+	ChangeState(NAME_Spectating);
+	
+	Client_SwitchToSpectator();
+}
+
+void ABRPlayerController::RequestSwitchToSpectator()
+{
+	UE_LOG(LogTemp, Error, TEXT("Request switch to spectator"))
+	Server_SwitchToSpectator();
+}
+

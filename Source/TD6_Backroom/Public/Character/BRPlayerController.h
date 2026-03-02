@@ -7,6 +7,7 @@
 #include "InputMappingContext.h"
 #include "TimerHolder.h"
 #include "Character/BRPlayerCharacter.h"
+#include "Character/BRSpectatorPawn.h"
 #include "BRPlayerController.generated.h"
 
 class UInGameUI;
@@ -37,13 +38,20 @@ class TD6_BACKROOM_API ABRPlayerController : public APlayerController
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inputs")
-	TObjectPtr<UInputMappingContext> InputMappingContext;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inputs|Game")
+	TObjectPtr<UInputMappingContext> GameMappingContext;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inputs")
-	TArray<FAction> InputActions;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inputs|Spectator")
+	TObjectPtr<UInputMappingContext> SpectatorMappingContext;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inputs|Game")
+	TArray<FAction> GameInputActions;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inputs|Spectator")
+	TArray<FAction> SpectatorInputActions;
 
-	TWeakObjectPtr<ABRPlayerCharacter> OwningCharacter;
+	TWeakObjectPtr<ABRPlayerCharacter> GameCharacter;
+	TWeakObjectPtr<ABRSpectatorPawn> CustomSpectatorPawn;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UInGameUI> InGameUI;
@@ -59,8 +67,10 @@ protected:
 
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnRep_Pawn() override;
+
+	virtual void AcknowledgePossession(class APawn* P) override;
 	
-	void SetupInputMappingContext();
+	void SwitchMappingContext(const FName& Name);
 
 	UFUNCTION()
 	void OnMove(const FInputActionValue& InputActionValue) const;
@@ -79,8 +89,16 @@ protected:
 	
 	UFUNCTION()
 	void OnSprint(const FInputActionValue& InputActionValue) const;
-// 	UFUNCTION(BlueprintCallable)
-// 	void OnCreateSession_Debug();
-// private:
-// 	void OnExternalUIChange(bool bIsOpening);
+
+	UFUNCTION()
+	void OnNextSpectate(const FInputActionValue& InputActionValue);
+
+	UFUNCTION(Server, Reliable)
+	void Server_SwitchToSpectator();
+	
+	UFUNCTION(Client, Reliable)
+	void Client_SwitchToSpectator();
+public:
+	UFUNCTION(BlueprintCallable)
+	void RequestSwitchToSpectator();
 };

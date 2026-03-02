@@ -5,6 +5,7 @@
 #include "EventBus.h"
 #include "ActorComponent/InteractionComponent.h"
 #include "Character/BRCharacterGameplayTags.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 ABRPlayerCharacter::ABRPlayerCharacter()
@@ -20,6 +21,8 @@ ABRPlayerCharacter::ABRPlayerCharacter()
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("Interaction System"));
 	GenericTeamId = 0;
 	StaminaComponent = CreateDefaultSubobject<UStaminaComponent>(TEXT("Stamina Component"));
+
+	
 }
 
 void ABRPlayerCharacter::BeginPlay()
@@ -44,6 +47,11 @@ void ABRPlayerCharacter::BeginPlay()
 	GetCharacterMovement()->MaxWalkSpeed = PlayerData->WalkSpeed;
 	GetCharacterMovement()->MaxAcceleration = PlayerData->WalkSpeed * PlayerData->AccelerationModifier;
 	GetCharacterMovement()->MaxWalkSpeedCrouched = PlayerData->CrouchSpeed;
+
+	
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+
+	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 }
 
 void ABRPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -84,6 +92,21 @@ void ABRPlayerCharacter::GetActorEyesViewPoint(FVector& OutLocation, FRotator& O
 {
 	OutLocation = CameraComponent->GetComponentLocation();
 	OutRotation = GetBaseAimRotation();
+}
+
+void ABRPlayerCharacter::EnableRagdoll_Implementation()
+{
+	if (UCapsuleComponent* CapsuleComp = GetCapsuleComponent())
+	{
+		CapsuleComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	if (USkeletalMeshComponent* MeshComp = GetMesh())
+	{
+		MeshComp->SetCollisionProfileName(FName("Ragdoll"));
+		MeshComp->SetSimulatePhysics(true);
+		MeshComp->WakeAllRigidBodies();
+	}
 }
 
 void ABRPlayerCharacter::OnMove(const FInputActionValue& InputActionValue)

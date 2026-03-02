@@ -5,7 +5,10 @@
 
 #include "Chain.h"
 #include "EventBus.h"
+#include "Linq.h"
 #include "Actor/ActorGameplayTags.h"
+#include "Algo/Count.h"
+#include "GameFramework/PlayerState.h"
 #include "GameMode/BRGameModeGameplayTags.h"
 #include "GameState/BRGameGameState.h"
 #include "Items/BRItemGameplayTag.h"
@@ -75,7 +78,10 @@ void ABRGameGameMode::CheckIfAllPlayerAreInExitZone()
 	
 	Chain::Execute(GetGameState<ABRGameGameState>(), [this](ABRGameGameState* Game)
 	{
-		if (CurrentPlayerNumberInExitZone >= Game->PlayerArray.Num())
+		if (CurrentPlayerNumberInExitZone >= Algo::CountIf(Game->PlayerArray, [](TObjectPtr<APlayerState> PlayerState)
+		{
+			return !PlayerState->IsSpectator();
+		}))
 		{
 			bAllPlayerAreInExitZone = true;
 			Game->MulticastNotifyAllPlayerAreInExitZone();

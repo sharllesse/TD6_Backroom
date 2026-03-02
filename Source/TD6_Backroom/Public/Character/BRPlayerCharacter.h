@@ -69,8 +69,10 @@ public:
 
 	virtual void Tick(float DeltaSeconds) override;
 
+	
+protected:
 	template<typename Func>
-	void SetNotifyInteractCallback(Func&& Callback)
+		void SetNotifyInteractCallback(Func&& Callback)
 	{
 		InteractionComponent->NotifyCanInteractEvent.BindLambda(Forward<Func>(Callback));
 	}
@@ -92,4 +94,8 @@ protected:
 	void OnTryInteract() const;
 
 	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
+
+
+	UFUNCTION(NetMulticast, Reliable)
+	void EnableRagdoll();
 };
