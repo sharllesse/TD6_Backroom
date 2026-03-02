@@ -43,6 +43,7 @@ void ABRPlayerController::BeginPlay()
 	VivoxSubsystem = GetGameInstance()->GetSubsystem<UVivoxSubsystem>();
 	if (VivoxSubsystem.IsValid())
 	{
+		UE_LOG(Log_BRVivox, Error, TEXT("Switching to 3d room"))
 		VivoxSubsystem->SwitchTo3DRoom();	
 	}
 	//UEventBus::AddUObject(this, Online_Callback_OnExternalUIChange, this, &ABRPlayerController::OnExternalUIChange);
