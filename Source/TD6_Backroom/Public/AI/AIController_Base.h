@@ -7,21 +7,27 @@
 #include "Runtime/AIModule/Classes/AIController.h"
 #include "AIController_Base.generated.h"
 
+class AAICharacter_Base;
+
 UCLASS()
 class TD6_BACKROOM_API AAIController_Base : public AAIController
 {
 	GENERATED_BODY()
 
+	friend AAICharacter_Base;
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UBehaviorTree> AssignedBehaviorTree;
 
 	TWeakObjectPtr<UAISenseConfig_Sight> SenseConfig_Sight;
+
+	TWeakObjectPtr<AAICharacter_Base> Character_Base;
 public:
 	AAIController_Base();
 
 protected:
-	virtual void OnSetupBlackboardKey(UBlackboardComponent* BlackboardComponent) {}
+	virtual void OnSetupBlackboardKey(AAICharacter_Base* InPawn, UBlackboardComponent* BlackboardComponent) {}
 	
 	virtual void OnPossess(APawn* InPawn) override;
 	

@@ -12,6 +12,12 @@
 struct FBTWanderTaskMemory : FBTBaseTaskMemory
 {
 	TWeakObjectPtr<UAITask_Wander> WanderTask;
+
+	~FBTWanderTaskMemory()
+	{
+		bIsInitialized = false;
+		WanderTask.Reset();
+	}
 	
 	void Clean()
 	{
@@ -46,6 +52,8 @@ public:
 	virtual void OnGameplayTaskDeactivated(UGameplayTask& Task) override;
 
 	virtual EBTNodeResult::Type AbortTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+
+	virtual void CleanupMemory(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, EBTMemoryClear::Type CleanupType) const override;
 
 	virtual void OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, EBTNodeResult::Type TaskResult) override;
 };

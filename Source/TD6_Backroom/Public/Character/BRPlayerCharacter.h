@@ -8,7 +8,6 @@
 #include "InputActionValue.h"
 #include "ActorComponent/InteractionComponent.h"
 #include "Camera/CameraComponent.h"
-#include "GameFramework/Character.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "BRPlayerCharacter.generated.h"
 

@@ -52,13 +52,23 @@ void UBTTask_Wander::OnGameplayTaskDeactivated(UGameplayTask& Task)
 EBTNodeResult::Type UBTTask_Wander::AbortTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	FBTWanderTaskMemory* TaskMemory{ CastNodeMemory(NodeMemory) };
-	TaskMemory->WanderTask->FinishFailedTask();
+
+	if (TaskMemory->WanderTask.IsValid())
+	{
+		TaskMemory->WanderTask->FinishFailedTask();	
+	}
 	
 	return EBTNodeResult::Aborted;
 }
 
+void UBTTask_Wander::CleanupMemory(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory,
+	EBTMemoryClear::Type CleanupType) const
+{
+	CleanupNodeMemory<FBTWanderTaskMemory>(NodeMemory, CleanupType);
+}
+
 void UBTTask_Wander::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory,
-	EBTNodeResult::Type TaskResult)
+                                    EBTNodeResult::Type TaskResult)
 {
 	FBTWanderTaskMemory* WanderTaskMemory{ CastNodeMemory(NodeMemory) };
 	WanderTaskMemory->Clean();

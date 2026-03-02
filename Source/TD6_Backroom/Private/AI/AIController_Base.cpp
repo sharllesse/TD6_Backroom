@@ -3,6 +3,7 @@
 
 #include "AI/AIController_Base.h"
 #include "BehaviorTree/BehaviorTree.h"
+#include "AI/AICharacter_Base.h"
 #include "Perception/AIPerceptionComponent.h"
 
 AAIController_Base::AAIController_Base()
@@ -20,11 +21,13 @@ AAIController_Base::AAIController_Base()
 void AAIController_Base::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
+
+	Character_Base = Cast<AAICharacter_Base>(InPawn);
 	
 	UBlackboardComponent* BlackboardComp;
 	if (UseBlackboard(AssignedBehaviorTree->BlackboardAsset, BlackboardComp))
 	{
-		OnSetupBlackboardKey(BlackboardComp);
+		OnSetupBlackboardKey(Character_Base.Get(), BlackboardComp);
 		
 		RunBehaviorTree(AssignedBehaviorTree);
 	}
