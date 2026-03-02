@@ -8,6 +8,7 @@
 #include "GameMode/BRGameModeGameplayTags.h"
 #include "GameState/BRGameStateGameplayTags.h"
 #include "Online/BROnlineGameTags.h"
+#include "PlayerState/BRGamePlayerState.h"
 #include "UI/UIManagerSubsystem.h"
 #include "UI/InGameUI.h"
 
@@ -199,6 +200,8 @@ void ABRPlayerController::SwitchMappingContext(const FName& Name)
 
 void ABRPlayerController::OnMove(const FInputActionValue& InputActionValue) const
 {
+	if (!GameCharacter.IsValid())
+		return;
 	GameCharacter->OnMove(InputActionValue);
 }
 
@@ -212,16 +215,23 @@ void ABRPlayerController::OnLook(const FInputActionValue& InputActionValue)
 
 void ABRPlayerController::OnJump(const FInputActionValue& InputActionValue) const
 {
+	if (!GameCharacter.IsValid())
+		return;
 	GameCharacter->OnJump(InputActionValue);
 }
 
 void ABRPlayerController::OnInteract(const FInputActionValue& InputActionValue) const
 {
+	if (!GameCharacter.IsValid())
+		return;
 	GameCharacter->OnTryInteract();
 }
 
 void ABRPlayerController::OnCrouch(const FInputActionValue& InputActionValue) const
 {
+	if (!GameCharacter.IsValid())
+		return;
+	
 	if (InputActionValue.Get<bool>())
 	{ 
 		GameCharacter->Crouch();
@@ -234,11 +244,15 @@ void ABRPlayerController::OnCrouch(const FInputActionValue& InputActionValue) co
 
 void ABRPlayerController::OnSprint(const FInputActionValue& InputActionValue) const
 {
+	if (!GameCharacter.IsValid())
+		return;
 	GameCharacter->OnSprint(InputActionValue);
 }
 
 void ABRPlayerController::OnNextSpectate(const FInputActionValue& InputActionValue)
 {
+	if (!CustomSpectatorPawn.IsValid())
+		return;
 	if (!IsLocalController())
 		return;
 	
@@ -283,9 +297,9 @@ void ABRPlayerController::Server_SwitchToSpectator_Implementation()
 
 	
 	UnPossess();
-	if (PlayerState)
+	if (auto GamePlayerState = Cast<ABRGamePlayerState>(PlayerState))
 	{
-		PlayerState->SetIsSpectator(true);
+		GamePlayerState->SetToSpectator();
 	}
 
 	ClientGotoState(NAME_Spectating);

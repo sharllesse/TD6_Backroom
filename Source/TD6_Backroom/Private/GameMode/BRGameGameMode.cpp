@@ -12,6 +12,7 @@
 #include "GameMode/BRGameModeGameplayTags.h"
 #include "GameState/BRGameGameState.h"
 #include "Items/BRItemGameplayTag.h"
+#include "PlayerState/BRPlayerStateGameTags.h"
 
 void ABRGameGameMode::BeginPlay()
 {
@@ -35,11 +36,17 @@ void ABRGameGameMode::BeginPlay()
 		++CurrentPlayerNumberInExitZone;
 		CheckIfAllPlayerAreInExitZone();
 	});
-
+	
 	DelegateHandler.AddDelegate(this, Actor_ExitZone_Callback_OnPlayerLeave, [this](AActor* Player)
 	{
 		--CurrentPlayerNumberInExitZone;
 	});
+	
+	DelegateHandler.AddDelegate(this, PlayerState_Callback_Dies, [this]
+	{
+		CheckIfAllPlayerAreInExitZone();
+	});
+
 }
 
 void ABRGameGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)

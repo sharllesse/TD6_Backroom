@@ -14,3 +14,8 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(PlayerState_Callback_LeaveLobby, "PlayerState.Cal
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(PlayerState_Callback_IsAllPlayerReady, "PlayerState.Callback.IsAllPlayerReady",
 	"A callback that trigger when all the player are ready or not"
 	"[Args: bool bIsAllPlayerReady]")
+
+
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(PlayerState_Callback_Dies, "PlayerState.Callback.Dies",
+	"A callback that trigger when a player dies or disconnect."
+	"[Args: ]")

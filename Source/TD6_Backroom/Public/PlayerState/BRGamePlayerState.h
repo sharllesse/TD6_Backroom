@@ -16,6 +16,11 @@ class TD6_BACKROOM_API ABRGamePlayerState : public APlayerState
 {
 	GENERATED_BODY()
 	
-protected:
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+	UFUNCTION(Server, Reliable)
+	void NotifiesAPlayerDied();
+public:
+
+	void SetToSpectator();
 };
