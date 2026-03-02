@@ -7,6 +7,8 @@
 #include "Character/BRCharacterGameplayTags.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AIPerceptionSystem.h"
 
 ABRPlayerCharacter::ABRPlayerCharacter()
 {
@@ -28,6 +30,10 @@ ABRPlayerCharacter::ABRPlayerCharacter()
 void ABRPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	if (UAIPerceptionSystem* PerceptionSystem = UAIPerceptionSystem::GetCurrent(GetWorld()))
+	{
+		PerceptionSystem->UnregisterSource(*this);
+	}
 	if (IsLocallyControlled())
 	{
 		UEventBus::LockSignature<const FTransform&>(this, Character_Callback_OnPlayerMove);
@@ -107,6 +113,8 @@ void ABRPlayerCharacter::EnableRagdoll_Implementation()
 		MeshComp->SetSimulatePhysics(true);
 		MeshComp->WakeAllRigidBodies();
 	}
+	
+	Tags.AddUnique(DeadTag);
 }
 
 void ABRPlayerCharacter::OnMove(const FInputActionValue& InputActionValue)

@@ -6,6 +6,7 @@
 #include "Chain.h"
 #include "EventBus.h"
 #include "IOnlineSubsystemEOS.h"
+#include "Linq.h"
 #include "OnlineSubsystem.h"
 #include "OnlineSubsystemUtils.h"
 #include "VivoxCore.h"
@@ -340,5 +341,87 @@ void UVivoxSubsystem::Set3DPosition(const FVector& Position, const FVector& Forw
 	if (InGameChannelSession)
 	{
 		InGameChannelSession->Set3DPosition(Position, Position, Forward, Up);
+	}
+}
+
+TArray<FString> UVivoxSubsystem::GetAllMicrophones() const
+{
+	if (!VoiceClient)
+	{
+		return {};
+	}
+	
+	return Linq::Start(VoiceClient->AudioInputDevices().AvailableDevices())
+	.Select([](const TPair<FString,IAudioDevice*>& Element)
+	{
+		
+		return Element.Value->Name();
+	}).ToArray();
+}
+
+void UVivoxSubsystem::SetMicrophone(const FString& NewDevice) const
+{
+	if(VoiceClient)
+	{
+		IAudioDevice* Device{nullptr};
+		for (auto PresenceKey : VoiceClient->AudioInputDevices().AvailableDevices())
+		{
+			if (NewDevice == PresenceKey.Value->Name())
+			{
+				Device = PresenceKey.Value;
+				break;
+			}
+		}
+		
+		
+		VoiceClient->AudioInputDevices().SetActiveDevice(*Device,
+			IAudioDevices::FOnSetActiveDeviceCompletedDelegate::CreateLambda([this](VivoxCoreError Error, const FString & DeviceName)
+			{
+				if (Error == VxErrorSuccess)
+				{
+					UE_LOG(Log_BRVivox, Log, TEXT("Microphone change to %s"), *VoiceClient->AudioInputDevices().AvailableDevices()[DeviceName]->Name());
+				}
+			}));
+	}
+}
+
+TArray<FString> UVivoxSubsystem::GetAllListeners() const
+{
+	if (!VoiceClient)
+	{
+		return {};
+	}
+	
+	return Linq::Start(VoiceClient->AudioOutputDevices().AvailableDevices())
+	.Select([](const TPair<FString,IAudioDevice*>& Element)
+	{
+		
+		return Element.Value->Name();
+	}).ToArray();
+}
+
+void UVivoxSubsystem::SetListener(const FString& NewDevice) const
+{
+	if(VoiceClient)
+	{
+		IAudioDevice* Device{nullptr};
+		for (auto PresenceKey : VoiceClient->AudioOutputDevices().AvailableDevices())
+		{
+			if (NewDevice == PresenceKey.Value->Name())
+			{
+				Device = PresenceKey.Value;
+				break;
+			}
+		}
+		
+		
+		VoiceClient->AudioOutputDevices().SetActiveDevice(*Device,
+			IAudioDevices::FOnSetActiveDeviceCompletedDelegate::CreateLambda([this](VivoxCoreError Error, const FString & DeviceName)
+			{
+				if (Error == VxErrorSuccess)
+				{
+					UE_LOG(Log_BRVivox, Log, TEXT("Microphone change to %s"), *VoiceClient->AudioOutputDevices().AvailableDevices()[DeviceName]->Name());
+				}
+			}));
 	}
 }

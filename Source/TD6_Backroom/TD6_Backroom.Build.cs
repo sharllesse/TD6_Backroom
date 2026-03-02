@@ -28,6 +28,7 @@ public class TD6_Backroom : ModuleRules
 			"RenderCore",
 			"Renderer",
 			"UMG",
+			"SlateCore",
 			"EngineSettings",
 			"VivoxCore",
 			"AIModule",

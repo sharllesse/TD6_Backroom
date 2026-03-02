@@ -22,11 +22,21 @@ class TD6_BACKROOM_API UMainMenuWidget : public UUserWidget
 	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UButton> JoinRoomButton;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UButton> OptionsButton;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UButton> QuitButton;
 
 	UFUNCTION()
 	void OnCreateRoomClicked();
 	UFUNCTION()
 	void OnJoinRoomClicked();
+	UFUNCTION()
+	void OnOptionsClicked();
+	UFUNCTION()
+	void OnQuitClicked();
 
 public:
 	

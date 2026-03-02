@@ -63,4 +63,10 @@ public:
 	void SwitchTo2DRoom();
 	
 	void Set3DPosition(const FVector& Position, const FVector& Forward, const FVector& Up);
+	
+	TArray<FString> GetAllMicrophones() const;
+	void SetMicrophone(const FString& NewDevice) const;
+	
+	TArray<FString> GetAllListeners() const;
+	void SetListener(const FString& NewDevice) const;
 };

@@ -69,6 +69,7 @@ public:
 
 	virtual void Tick(float DeltaSeconds) override;
 
+	static inline const FName DeadTag{TEXT("Dead")};
 	
 protected:
 	template<typename Func>

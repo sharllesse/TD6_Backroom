@@ -17,9 +17,13 @@ class TD6_BACKROOM_API AAIController_Bacteria : public AAIController_Base
 
 	TWeakObjectPtr<AAICharacter_Bacteria> Character_Bacteria;
 	
+	FDelegateHandle OnPlayerDeath;
+	
 public:
 	AAIController_Bacteria();
 
+	virtual void BeginPlay() override;
+	
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
 	virtual void OnSetupBlackboardKey(AAICharacter_Base* InPawn, UBlackboardComponent* BlackboardComponent) override;
