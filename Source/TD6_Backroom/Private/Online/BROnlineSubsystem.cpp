@@ -124,6 +124,7 @@ bool UBROnlineSubsystem::CreateSession(int32 SessionMaxConnections, const FStrin
 		OnlineSessionSettings.bShouldAdvertise = !bIsPrivate;
 		OnlineSessionSettings.bUseLobbiesIfAvailable = true;
 		OnlineSessionSettings.Set(Online_Settings_Session_Name, SessionName, EOnlineDataAdvertisementType::ViaOnlineService);
+		OnlineSessionSettings.Set(Online_Settings_Session_UID, FGuid::NewGuid().ToString(), EOnlineDataAdvertisementType::ViaOnlineService);
 		OnlineSessionSettings.Set(SETTING_ACTIVITY_SESSION, true, EOnlineDataAdvertisementType::ViaOnlineService);
 		OnlineSessionSettings.Set(SETTING_MULTIPLAYER_VISIBILITY, bIsPrivate ? 0 : 1, EOnlineDataAdvertisementType::ViaOnlineService);
 
@@ -732,6 +733,28 @@ TOptional<FString> UBROnlineSubsystem::GetSessionName() const
 			FString OutName;
 			SessionSetting->Get(Online_Settings_Session_Name, OutName);
 			return TOptional(OutName);
+		}
+			return TOptional<FString>(NullOpt);
+	}, Online::GetSessionInterface(World));
+}
+
+TOptional<FString> UBROnlineSubsystem::GetSessionUID() const
+{
+	const UWorld* World{ GetWorld() };
+	
+	if (!PlayerIsInSession())
+	{
+		return NullOpt;
+	}
+	
+	return Internal_ExecuteOnValidContext(
+		[this](const IOnlineSessionPtr& SessionInterface)
+	{
+		if (auto SessionSetting = SessionInterface->GetSessionSettings(NAME_GameSession))
+		{
+			FString OutID;
+			SessionSetting->Get(Online_Settings_Session_UID, OutID);
+			return TOptional(OutID);
 		}
 			return TOptional<FString>(NullOpt);
 	}, Online::GetSessionInterface(World));

@@ -10,6 +10,7 @@
 #include "Character/BRSpectatorPawn.h"
 #include "BRPlayerController.generated.h"
 
+class UVivoxSubsystem;
 class UInGameUI;
 class UCreateRoomWidget;
 class UMainMenuWidget;
@@ -56,15 +57,19 @@ protected:
 	UPROPERTY(Transient)
 	TObjectPtr<UInGameUI> InGameUI;
 	
+	TWeakObjectPtr<UVivoxSubsystem> VivoxSubsystem;
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+	virtual void Tick(float DeltaSeconds) override;
+	
 	void SetupLocalInfo();
 	
 	virtual void SetupInputComponent() override;
 
+	void OnPossessPawnLocalLogic(APawn* InPawn);
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnRep_Pawn() override;
 

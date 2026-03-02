@@ -22,9 +22,12 @@ void ABRMainMenuPlayerController::BeginPlay()
 	auto DelegateHandle = UEventBus::AddLambda(this,Online_Callback_OnLoginComplete,
 		[this](int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
 		{
-			Chain::StartChain(GetGameInstance())
-			.Transform([](UGameInstance* GameInstance){return GameInstance->GetSubsystem<UVivoxSubsystem>();})
-			.Execute(&UVivoxSubsystem::Login);
+			if (bWasSuccessful)
+			{
+				Chain::StartChain(GetGameInstance())
+				.Transform([](UGameInstance* GameInstance){return GameInstance->GetSubsystem<UVivoxSubsystem>();})
+				.Execute(&UVivoxSubsystem::Login);
+			}
 		});
 
 	DelegateHandles.Add(Online_Callback_OnLoginComplete, DelegateHandle);

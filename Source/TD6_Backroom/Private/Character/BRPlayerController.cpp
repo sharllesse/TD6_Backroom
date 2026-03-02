@@ -5,6 +5,7 @@
 #include "EnhancedInputComponent.h"
 #include "EventBus.h"
 #include "GameFramework/PlayerState.h"
+#include "GameInstance/Subsystem/VivoxSubsystem.h"
 #include "GameMode/BRGameModeGameplayTags.h"
 #include "GameState/BRGameStateGameplayTags.h"
 #include "Online/BROnlineGameTags.h"
@@ -44,6 +45,20 @@ void ABRPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 
+}
+
+void ABRPlayerController::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	if (!VivoxSubsystem.IsValid())
+	{
+		VivoxSubsystem = GetGameInstance()->GetSubsystem<UVivoxSubsystem>();
+	}
+	
+	if (VivoxSubsystem.IsValid())
+	{
+		VivoxSubsystem->Set3DPosition(GetPawn()->GetActorLocation(), GetPawn()->GetActorForwardVector(), GetPawn()->GetActorUpVector());	
+	}
 }
 
 void ABRPlayerController::SetupLocalInfo()
@@ -102,36 +117,40 @@ void ABRPlayerController::SetupInputComponent()
 	UE_LOG(LogTemp, Error, TEXT("ABRPlayerController: The input component is null."))
 }
 
+void ABRPlayerController::OnPossessPawnLocalLogic(APawn* InPawn)
+{
+	if (auto IsGameCharacter = Cast<ABRPlayerCharacter>(InPawn))
+	{
+		GameCharacter = IsGameCharacter;
+		SwitchMappingContext(NAME_Playing);
+	}
+	else if (auto IsSpectatorCharacter = Cast<ABRSpectatorPawn>(InPawn))
+	{
+		CustomSpectatorPawn = IsSpectatorCharacter;
+		SwitchMappingContext(NAME_Spectating);
+	}
+}
+
 void ABRPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
 	if (IsLocalPlayerController())
 	{
-		if (auto IsGameCharacter = Cast<ABRPlayerCharacter>(InPawn))
-		{
-			GameCharacter = IsGameCharacter;
-			SwitchMappingContext(NAME_Playing);
-		}
-		else if (auto IsSpectatorCharacter = Cast<ABRSpectatorPawn>(InPawn))
-		{
-			CustomSpectatorPawn = IsSpectatorCharacter;
-			SwitchMappingContext(NAME_Spectating);
-		}
-	}
-	
+		OnPossessPawnLocalLogic(InPawn);
+	}	
 }
 
 void ABRPlayerController::OnRep_Pawn()
 {
 	Super::OnRep_Pawn();
-	OnPossess(GetPawn());
+	OnPossessPawnLocalLogic(GetPawn());
 }
 
 void ABRPlayerController::AcknowledgePossession(class APawn* P)
 {
 	Super::AcknowledgePossession(P);
-	OnPossess(P);
+	OnPossessPawnLocalLogic(P);
 }
 
 

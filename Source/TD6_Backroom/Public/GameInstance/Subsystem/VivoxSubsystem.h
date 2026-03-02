@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ChannelId.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "VivoxSubsystem.generated.h"
 
@@ -25,7 +26,10 @@ protected:
 	FVivoxCoreModule* VoiceModule{nullptr};
 	IClient* VoiceClient{nullptr};
 	ILoginSession* LoginSession{nullptr};
-	IChannelSession* ChannelSession{nullptr};
+	IChannelSession* InGameChannelSession{nullptr};
+	ChannelId InGameChannelID;
+	IChannelSession* LobbyChannelSession{nullptr};
+	ChannelId LobbyChannelID;
 	IVoiceChatUser* VivoxUser;
 	
 	bool bIsLoggedIn{false};
@@ -44,6 +48,9 @@ protected:
 	FDelegateHandle OnLocalPlayerMove;
 	
 	FString FormatChannelSessionName(const FString& InputString);
+	
+	void Join3DVocalRoom(const FString& SessionName);
+	void JoinLobbyVocalRoom(const FString& SessionName);
 public:
 	
 	void Login();
@@ -51,6 +58,9 @@ public:
 	
 	void JoinVocalRoom();
 	void LeaveVocalRoom();
+	
+	void SwitchTo3DRoom();
+	void SwitchTo2DRoom();
 	
 	void Set3DPosition(const FVector& Position, const FVector& Forward, const FVector& Up);
 };

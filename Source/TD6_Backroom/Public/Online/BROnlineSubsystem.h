@@ -11,9 +11,10 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "BROnlineSubsystem.generated.h"
 
-constexpr int32 MaxSessionConnections{ 4 };
+constexpr int32 MaxSessionConnections{ 8 };
 
 constexpr auto Online_Settings_Session_Name{ TEXT("SETTINGS_SESSION_NAME") };
+constexpr auto Online_Settings_Session_UID{ TEXT("UNIQUE_SESSION_ID") };
 constexpr auto Online_Settings_Error{ TEXT("Session Settings Error") };
 
 struct FOnlineSubsystemData
@@ -76,6 +77,7 @@ public:
 	bool PlayerIsInSession() const;
 	
 	TOptional<FString> GetSessionName() const;
+	TOptional<FString> GetSessionUID() const;
 	
 	FString GetLocalPlayerUserName() const;
 private:
