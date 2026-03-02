@@ -62,7 +62,7 @@ void ABRPlayerController::Tick(float DeltaSeconds)
 		VivoxSubsystem = GetGameInstance()->GetSubsystem<UVivoxSubsystem>();
 	}
 	
-	if (VivoxSubsystem.IsValid())
+	if (VivoxSubsystem.IsValid() && IsValid(GetPawn()))
 	{
 		VivoxSubsystem->Set3DPosition(GetPawn()->GetActorLocation(), GetPawn()->GetActorForwardVector(), GetPawn()->GetActorUpVector());	
 	}
