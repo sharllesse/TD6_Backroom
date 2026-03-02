@@ -10,6 +10,7 @@
 #include "GameState/BRGameStateGameplayTags.h"
 #include "Online/BROnlineGameTags.h"
 #include "PlayerState/BRGamePlayerState.h"
+#include "PlayerState/BRPlayerStateGameTags.h"
 #include "UI/UIManagerSubsystem.h"
 #include "UI/InGameUI.h"
 
@@ -38,6 +39,12 @@ void ABRPlayerController::BeginPlay()
 		});
 	
 	
+	
+	VivoxSubsystem = GetGameInstance()->GetSubsystem<UVivoxSubsystem>();
+	if (VivoxSubsystem.IsValid())
+	{
+		VivoxSubsystem->SwitchTo3DRoom();	
+	}
 	//UEventBus::AddUObject(this, Online_Callback_OnExternalUIChange, this, &ABRPlayerController::OnExternalUIChange);
 }
 
@@ -128,6 +135,10 @@ void ABRPlayerController::OnPossessPawnLocalLogic(APawn* InPawn)
 	{
 		CustomSpectatorPawn = IsSpectatorCharacter;
 		SwitchMappingContext(NAME_Spectating);
+		if (VivoxSubsystem.IsValid())
+		{
+			VivoxSubsystem->SwitchTo2DRoom();	
+		}
 	}
 }
 
