@@ -106,7 +106,6 @@ void ABRPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	UE_LOG(LogTemp, Error, TEXT("OnPossess"))
 	if (IsLocalPlayerController())
 	{
 		if (auto IsGameCharacter = Cast<ABRPlayerCharacter>(InPawn))
@@ -126,42 +125,13 @@ void ABRPlayerController::OnPossess(APawn* InPawn)
 void ABRPlayerController::OnRep_Pawn()
 {
 	Super::OnRep_Pawn();
-
-	UE_LOG(LogTemp, Error, TEXT("OnRep_Pawn"))
-	if (IsLocalPlayerController())
-	{
-		if (auto IsGameCharacter = Cast<ABRPlayerCharacter>(GetPawn()))
-		{
-			UE_LOG(LogTemp, Error, TEXT("Possessing Game Pawn"))
-			GameCharacter = IsGameCharacter;
-			SwitchMappingContext(NAME_Playing);
-		}
-		else if (auto IsSpectatorCharacter = Cast<ABRSpectatorPawn>(GetSpectatorPawn()))
-		{
-			UE_LOG(LogTemp, Error, TEXT("Possessing Spectator Pawn"))
-			CustomSpectatorPawn = IsSpectatorCharacter;
-			SwitchMappingContext(NAME_Spectating);
-		}
-	}
+	OnPossess(GetPawn());
 }
 
 void ABRPlayerController::AcknowledgePossession(class APawn* P)
 {
 	Super::AcknowledgePossession(P);
-	UE_LOG(LogTemp, Error, TEXT("AcknowledgePossession"))
-	if (IsLocalPlayerController())
-	{
-		if (auto IsGameCharacter = Cast<ABRPlayerCharacter>(P))
-		{
-			GameCharacter = IsGameCharacter;
-			SwitchMappingContext(NAME_Playing);
-		}
-		else if (auto IsSpectatorCharacter = Cast<ABRSpectatorPawn>(P))
-		{
-			CustomSpectatorPawn = IsSpectatorCharacter;
-			SwitchMappingContext(NAME_Spectating);
-		}
-	}
+	OnPossess(P);
 }
 
 
