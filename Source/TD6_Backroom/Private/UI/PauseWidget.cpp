@@ -12,18 +12,7 @@ class UOptionsWidget;
 class UUIManagerSubsystem;
 
 void UPauseWidget::OnResumeClicked()
-{
-	Chain::StartChain(GetOwningLocalPlayer())
-	.Transform([this](const ULocalPlayer* LocalPlayer)
-	{
-		return LocalPlayer->GetPlayerController(GetWorld());
-	})
-	.Execute([](APlayerController* PlayerController)
-	{
-		PlayerController->SetInputMode(FInputModeGameOnly());
-		PlayerController->bShowMouseCursor = true;
-	});
-	
+{	
 	Chain::StartChain(GetOwningLocalPlayer())
 	.Transform([](const ULocalPlayer* LocalPlayer)
 	{
@@ -33,7 +22,17 @@ void UPauseWidget::OnResumeClicked()
 	{
 		UIManager->PopMenu();
 	});
-
+	
+	Chain::StartChain(GetOwningLocalPlayer())
+	.Transform([this](const ULocalPlayer* LocalPlayer)
+	{
+		return LocalPlayer->GetPlayerController(GetWorld());
+	})
+	.Execute([](APlayerController* PlayerController)
+	{
+		PlayerController->SetInputMode(FInputModeGameOnly());
+		PlayerController->bShowMouseCursor = false;
+	});
 }
 
 void UPauseWidget::OnOptionClicked()

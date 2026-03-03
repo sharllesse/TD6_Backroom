@@ -46,8 +46,11 @@ void ABRMainMenuPlayerController::BeginPlay()
 	
 	Chain::Execute(UBROnlineSubsystem::Get(GetWorld()), [this](UBROnlineSubsystem* Subsystem)
 	{
-		Subsystem->DestroySession();
-
+		if (Subsystem->PlayerIsInSession())
+		{
+			Subsystem->DestroySession();
+		}
+		
 		if (!Subsystem->IsLogged())
 		{
 			Chain::StartChain(GetLocalPlayer())

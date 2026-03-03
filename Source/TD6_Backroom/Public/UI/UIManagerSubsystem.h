@@ -102,7 +102,7 @@ public:
 	{
 		if (WidgetStack.IsEmpty())
 		{
-			return;
+				return;
 		}
 
 		WidgetStack.Last()->RemoveFromParent();
@@ -112,6 +112,5 @@ public:
 		{
 			WidgetStack.Last()->SetVisibility(ESlateVisibility::Visible);
 		}
-		
 	}
 };
