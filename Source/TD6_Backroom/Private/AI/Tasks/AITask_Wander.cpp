@@ -16,12 +16,13 @@ void UAITask_Wander::Activate()
 	}
 	
 	AAIController* AiController{ GetAIController() };
+	AActor* QueryOwner{ AiController->GetPawn() };
 	UBlackboardComponent* BlackboardComponent{ AiController->GetBlackboardComponent() };
 
 	MoveToRequest->SetRequestFinishedCallback(AiController, this, &UAITask_Wander::OnMoveRequestFinished);
 	
 	QueryFinishedSignature = FQueryFinishedSignature::CreateUObject(this, &UAITask_Wander::OnQueryRequestFinished);
-	CachedQueryID = EQSRequest->Execute(*GetAIController(), BlackboardComponent, QueryFinishedSignature);
+	CachedQueryID = EQSRequest->Execute(*QueryOwner, BlackboardComponent, QueryFinishedSignature);
 
 	if (CachedQueryID == INDEX_NONE)
 	{
