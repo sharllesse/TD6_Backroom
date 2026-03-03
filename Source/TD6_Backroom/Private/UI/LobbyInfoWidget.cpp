@@ -10,6 +10,7 @@
 #include "Components/TextBlock.h"
 #include "Components/VerticalBoxSlot.h"
 #include "GameFramework/GameStateBase.h"
+#include "GameInstance/BRGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "Online/BROnlineGameTags.h"
 #include "Online/BROnlineSubsystem.h"
@@ -84,6 +85,11 @@ void ULobbyInfoWidget::UpdateStartingTimer()
 		StartingTimerValue = 0;
 		if (GetOwningLocalPlayer()->GetPlayerController(GetWorld())->HasAuthority())
 		{
+			UpdateTimerHolder.Clear();
+			Chain::Execute(GetGameInstance<UBRGameInstance>(), [](UBRGameInstance* GameInstance)
+			{
+				GameInstance->SetMonsterNumber(1);
+			});		
 			Chain::Execute(UBROnlineSubsystem::Get(GetWorld()), &UBROnlineSubsystem::StartSession);
 		}
 	}	

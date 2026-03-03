@@ -50,6 +50,19 @@ void UBRGameInstance::HandleNetworkDisconnect(UWorld* World, UNetDriver* NetDriv
 	}
 }
 
+int UBRGameInstance::GetMonsterNumber() const
+{
+	return MonsterNumber;
+}
+
+void UBRGameInstance::SetMonsterNumber(int InMonsterNumber)
+{
+	if (GetPrimaryPlayerController()->HasAuthority())
+	{
+		MonsterNumber = InMonsterNumber;
+	}
+}
+
 UOptionSettingsSave* UBRGameInstance::GetOptionsSettings()
 {
 	return OptionSettingsSave;

@@ -1,18 +1,18 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Utils/EventBusDelegateHandler.h"
+#include "Utils/FEventBusDelegateHandler.h"
 
 
-EventBusDelegateHandler::EventBusDelegateHandler()
+FEventBusDelegateHandler::FEventBusDelegateHandler()
 {
 }
 
-EventBusDelegateHandler::~EventBusDelegateHandler()
+FEventBusDelegateHandler::~FEventBusDelegateHandler()
 {
 }
 
-void EventBusDelegateHandler::Clear(const UObject* WorldContext)
+void FEventBusDelegateHandler::Clear(const UObject* WorldContext)
 {
 	for (const auto& [Tag, Delegates] : DelegatesMap)
 	{

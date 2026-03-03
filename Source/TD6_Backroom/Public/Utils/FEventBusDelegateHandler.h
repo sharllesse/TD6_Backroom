@@ -9,12 +9,12 @@
 /**
  * 
  */
-class TD6_BACKROOM_API EventBusDelegateHandler
+struct TD6_BACKROOM_API FEventBusDelegateHandler
 {
 	TMap<FGameplayTag, TArray<FDelegateHandle>> DelegatesMap;
 public:
-	EventBusDelegateHandler();
-	~EventBusDelegateHandler();
+	FEventBusDelegateHandler();
+	~FEventBusDelegateHandler();
 
 	template<typename Func>
 	void AddDelegate(UObject* WorldContext, const FGameplayTag& Tag, Func&& Callback)

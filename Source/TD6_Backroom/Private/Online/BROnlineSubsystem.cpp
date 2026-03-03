@@ -785,6 +785,16 @@ bool UBROnlineSubsystem::IsLogged() const
 	}, Online::GetIdentityInterface(World));
 }
 
+void UBROnlineSubsystem::OpenGameWorld() const
+{
+	if (PlayerIsInSession())
+	{
+		const FName LoadedMapPath{ UBROnlineSettings::Get()->LoadedMapOnSessionStart.GetLongPackageName() };
+		const FString& LoadedMapOptions{ UBROnlineSettings::Get()->LoadedMapOptionsOnSessionStart };
+		UGameplayStatics::OpenLevel(this, LoadedMapPath, true, LoadedMapOptions);
+	}
+}
+
 void UBROnlineSubsystem::Internal_RegisterDelegates()
 {
 	const UWorld* World{ GetWorld() };

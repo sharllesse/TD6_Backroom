@@ -49,4 +49,7 @@ public:
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastNotifyAllPlayerAreInExitZone();
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastNotifyAllPlayerAreDead();
 };

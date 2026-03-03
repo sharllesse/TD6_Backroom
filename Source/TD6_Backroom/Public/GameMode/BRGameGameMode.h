@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "GameFramework/GameModeBase.h"
-#include "Utils/EventBusDelegateHandler.h"
+#include "Utils/FEventBusDelegateHandler.h"
 #include "BRGameGameMode.generated.h"
 
 /**
@@ -23,8 +23,9 @@ class TD6_BACKROOM_API ABRGameGameMode : public AGameModeBase
 	bool bHasAllVhs{false};
 	int CurrentPlayerNumberInExitZone{0};
 	bool bAllPlayerAreInExitZone{false};
+	bool bAllPlayerAreDead{false};
 	
-	EventBusDelegateHandler DelegateHandler;
+	FEventBusDelegateHandler DelegateHandler;
 
 
 	virtual void BeginPlay() override;
@@ -32,6 +33,7 @@ class TD6_BACKROOM_API ABRGameGameMode : public AGameModeBase
 
 	void CheckIfHasAllVhs();
 	void CheckIfAllPlayerAreInExitZone();
+	void CheckIfAllPlayerAreDead();
 public:
 
 	int GetVhsObjective() const;

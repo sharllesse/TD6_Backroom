@@ -7,6 +7,7 @@
 #include "EventBus.h"
 #include "Linq.h"
 #include "Actor/ActorGameplayTags.h"
+#include "Algo/AllOf.h"
 #include "Algo/Count.h"
 #include "GameFramework/PlayerState.h"
 #include "GameMode/BRGameModeGameplayTags.h"
@@ -44,6 +45,7 @@ void ABRGameGameMode::BeginPlay()
 	
 	DelegateHandler.AddDelegate(this, PlayerState_Callback_Dies, [this]
 	{
+		CheckIfAllPlayerAreDead();
 		CheckIfAllPlayerAreInExitZone();
 	});
 
@@ -78,7 +80,7 @@ void ABRGameGameMode::CheckIfHasAllVhs()
 
 void ABRGameGameMode::CheckIfAllPlayerAreInExitZone()
 {
-	if (bAllPlayerAreInExitZone)
+	if (bAllPlayerAreInExitZone || bAllPlayerAreDead)
 	{
 		return;
 	}
@@ -95,6 +97,26 @@ void ABRGameGameMode::CheckIfAllPlayerAreInExitZone()
 		}
 	});
 	
+}
+
+void ABRGameGameMode::CheckIfAllPlayerAreDead()
+{
+	if (bAllPlayerAreDead)
+	{
+		return;
+	}
+	
+	Chain::Execute(GetGameState<ABRGameGameState>(), [this](ABRGameGameState* Game)
+	{
+		if (Algo::AllOf(Game->PlayerArray, [](TObjectPtr<APlayerState> PlayerState)
+		{
+			return PlayerState->IsSpectator();
+		}))
+		{
+			bAllPlayerAreDead = true;
+			Game->MulticastNotifyAllPlayerAreDead();
+		}
+	});
 }
 
 int ABRGameGameMode::GetVhsObjective() const

@@ -8,6 +8,7 @@
 #include "TimerHolder.h"
 #include "Character/BRPlayerCharacter.h"
 #include "Character/BRSpectatorPawn.h"
+#include "Utils/FEventBusDelegateHandler.h"
 #include "BRPlayerController.generated.h"
 
 class UOptionSettingsSave;
@@ -61,6 +62,8 @@ protected:
 	TWeakObjectPtr<UVivoxSubsystem> VivoxSubsystem;
 	TWeakObjectPtr<UOptionSettingsSave> SaveSettings;
 
+	FEventBusDelegateHandler DelegateHandler;
+	
 	bool bIsInPause{false};
 
 protected:

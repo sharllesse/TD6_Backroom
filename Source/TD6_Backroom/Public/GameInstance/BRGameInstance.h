@@ -26,7 +26,12 @@ protected:
 
 	
 	static inline FString OptionSaveSlot{TEXT("Settings")};
+
+	int MonsterNumber{1};
 public:
+
+	int GetMonsterNumber() const;
+	void SetMonsterNumber(int InMonsterNumber);
 
 	UOptionSettingsSave* GetOptionsSettings();
 	void SaveOptionsSettings();

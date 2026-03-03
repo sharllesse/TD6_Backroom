@@ -86,6 +86,11 @@ void ABRGameGameState::OnObjectivesCompleted_Rep() const
 	}
 }
 
+void ABRGameGameState::MulticastNotifyAllPlayerAreDead_Implementation()
+{
+	UEventBus::Broadcast(this, GameMode_Callback_OnAllPlayerAreDead);
+}
+
 void ABRGameGameState::MulticastNotifyAllPlayerAreInExitZone_Implementation()
 {
 	UEventBus::Broadcast(this, GameMode_Callback_OnAllPlayerInExitZone);

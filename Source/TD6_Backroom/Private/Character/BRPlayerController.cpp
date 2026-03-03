@@ -14,9 +14,11 @@
 #include "PlayerState/BRGamePlayerState.h"
 #include "PlayerState/BRPlayerStateGameTags.h"
 #include "Save/OptionSettingsSave.h"
+#include "UI/EndScreenWidget.h"
 #include "UI/UIManagerSubsystem.h"
 #include "UI/InGameUI.h"
 #include "UI/OptionsWidget.h"
+#include "UI/EndScreenWidget.h"
 #include "UI/PauseWidget.h"
 
 
@@ -31,12 +33,6 @@ void ABRPlayerController::BeginPlay()
 		SetupLocalInfo();
 	}
 	
-
-
-	UEventBus::AddLambda(this, GameState_Callback_OnObjectivesCompleted, []
-	{
-		GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Red, TEXT("All vhs collected."));
-	});
 
 	UEventBus::AddLambda(this, GameMode_Callback_OnAllPlayerInExitZone, []
 		{
@@ -64,7 +60,7 @@ void ABRPlayerController::BeginPlay()
 void ABRPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
-
+	DelegateHandler.Clear(GetWorld());
 }
 
 void ABRPlayerController::Tick(float DeltaSeconds)
@@ -120,6 +116,41 @@ void ABRPlayerController::SetupLocalInfo()
 	GameCharacter->StaminaComponent->OnStaminaChange.BindLambda([this](float Current, float Max)
 	{
 		InGameUI->SetStaminaBar(Current, Max);
+	});
+
+	DelegateHandler.AddDelegate(this, GameMode_Callback_OnAllPlayerInExitZone, [this]
+	{
+		SetInputMode(FInputModeUIOnly());
+		Chain::StartChain(GetLocalPlayer())
+		.Transform([](const ULocalPlayer* LocalPlayer)
+		{
+			return LocalPlayer->GetSubsystem<UUIManagerSubsystem>();
+		})
+		.Transform([](UUIManagerSubsystem* UIManager)
+		{
+			return UIManager->CreateWidget<UEndScreenWidget>();
+		}).Execute([](UEndScreenWidget* ScreenWidget)
+		{
+			ScreenWidget->SetState(UEndScreenWidget::State::Win);
+		});	
+	});
+	
+	DelegateHandler.AddDelegate(this, GameMode_Callback_OnAllPlayerAreDead, [this]
+	{
+		SetInputMode(FInputModeUIOnly());
+		Chain::StartChain(GetLocalPlayer())
+		.Transform([](const ULocalPlayer* LocalPlayer)
+		{
+			return LocalPlayer->GetSubsystem<UUIManagerSubsystem>();
+		})
+		.Transform([](UUIManagerSubsystem* UIManager)
+		{
+			return UIManager->CreateWidget<UEndScreenWidget>();
+		})
+		.Execute([](UEndScreenWidget* ScreenWidget)
+		{
+			ScreenWidget->SetState(UEndScreenWidget::State::Lose);
+		});	
 	});
 }
 
