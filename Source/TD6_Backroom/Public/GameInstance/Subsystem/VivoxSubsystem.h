@@ -45,7 +45,7 @@ protected:
 
 	void RetrieveVivoxUser();
 	
-	FDelegateHandle OnLocalPlayerMove;
+	FDelegateHandle OnSessionDisconnection;
 	
 	FString FormatChannelSessionName(const FString& InputString);
 	

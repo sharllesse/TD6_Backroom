@@ -12,6 +12,7 @@
 #include "VivoxCore.h"
 #include "Character/BRCharacterGameplayTags.h"
 #include "GameInstance/BRGameInstanceGameplayTags.h"
+#include "Online/BROnlineGameTags.h"
 #include "Online/BROnlineSubsystem.h"
 #include "VivoxCore/Public/IClient.h"
 
@@ -32,6 +33,14 @@ void UVivoxSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	
 	UEventBus::LockSignature<const LoginState&>(this, GameInstance_Callback_OnVivoxLoginSessionStateChange);
 	UEventBus::LockSignature<const IChannelConnectionState&>(this, GameInstance_Callback_OnVivoxChannelSessionStateChange);
+
+	OnSessionDisconnection = UEventBus::AddLambda(this, Online_Callback_OnDestroySessionCompleted, [this](const FString& SessionName, bool bWasSuccessful)
+	{
+		if (bWasSuccessful)
+		{
+			LeaveVocalRoom();
+		}
+	});
 }
 
 void UVivoxSubsystem::Deinitialize()
@@ -39,6 +48,7 @@ void UVivoxSubsystem::Deinitialize()
 	Super::Deinitialize();
 	UEventBus::UnlockSignature(this, GameInstance_Callback_OnVivoxLoginSessionStateChange);
 	UEventBus::UnlockSignature(this, GameInstance_Callback_OnVivoxChannelSessionStateChange);
+	UEventBus::Remove(this ,Online_Callback_OnDestroySessionCompleted , OnSessionDisconnection);
 }
 
 void UVivoxSubsystem::RetrieveVivoxUser()
@@ -168,7 +178,6 @@ void UVivoxSubsystem::JoinLobbyVocalRoom(const FString& SessionName)
 		{
 			UE_LOG(Log_BRVivox, Log, TEXT("Lobby Channel %s fully disconnected\n"), *ChannelName);
 			bIsInVocalRoom = false;
-			UEventBus::Remove(this, Character_Callback_OnPlayerMove, OnLocalPlayerMove);
 		}
 		UEventBus::Broadcast<const IChannelConnectionState&>(this, GameInstance_Callback_OnVivoxChannelSessionStateChange, State);
 	});
@@ -263,9 +272,17 @@ void UVivoxSubsystem::JoinVocalRoom()
 
 void UVivoxSubsystem::LeaveVocalRoom()
 {
-	if (bIsInVocalRoom && InGameChannelSession)
+	if (InGameChannelSession)
 	{
+		UE_LOG(Log_BRVivox, Warning, TEXT("Leaving InGameChannelSession"));
 		InGameChannelSession->Disconnect();
+		InGameChannelSession = nullptr;
+	}
+	if (LobbyChannelSession)
+	{
+		UE_LOG(Log_BRVivox, Warning, TEXT("Leaving LobbyChannelSession"));
+		LobbyChannelSession->Disconnect();
+		LobbyChannelSession = nullptr;
 	}
 }
 
