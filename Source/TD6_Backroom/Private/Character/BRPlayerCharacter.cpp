@@ -5,6 +5,7 @@
 #include "EventBus.h"
 #include "ActorComponent/InteractionComponent.h"
 #include "Character/BRCharacterGameplayTags.h"
+#include "Character/BRPlayerController.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
@@ -112,6 +113,11 @@ void ABRPlayerCharacter::EnableRagdoll_Implementation()
 		MeshComp->SetCollisionProfileName(FName("Ragdoll"));
 		MeshComp->SetSimulatePhysics(true);
 		MeshComp->WakeAllRigidBodies();
+	}
+
+	if (auto PlayerController = Cast<ABRPlayerController>(Controller))
+	{
+		PlayerController->RequestSwitchToSpectator();
 	}
 	
 	Tags.AddUnique(DeadTag);
