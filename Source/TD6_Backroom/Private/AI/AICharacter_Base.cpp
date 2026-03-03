@@ -21,6 +21,12 @@ FGenericTeamId AAICharacter_Base::GetGenericTeamId() const
 
 ETeamAttitude::Type AAICharacter_Base::GetTeamAttitudeTowards(const AActor& Other) const
 {
+	const IGenericTeamAgentInterface* GenericTeamAgentInterface{ Cast<const IGenericTeamAgentInterface>(&Other) };
+	if (GenericTeamAgentInterface->GetGenericTeamId() == 2)
+	{
+		return ETeamAttitude::Neutral;
+	}
+	
 	return ETeamAttitude::Hostile;
 }
 

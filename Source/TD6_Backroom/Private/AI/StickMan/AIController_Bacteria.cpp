@@ -19,15 +19,15 @@ AAIController_Bacteria::AAIController_Bacteria()
 void AAIController_Bacteria::BeginPlay()
 {
 	Super::BeginPlay();
-	OnPlayerDeath = UEventBus::AddLambda(this, PlayerState_Callback_Dies, [this]
-	{
-		AActor* CurrentTarget = Cast<AActor>(Blackboard->GetValueAsObject(TEXT("TargetActor")));
-		if (CurrentTarget && CurrentTarget->ActorHasTag(ABRPlayerCharacter::DeadTag))
-		{
-			Blackboard->ClearValue(TEXT("TargetActor"));
-			Blackboard->ClearValue(TEXT("LostLocation"));
-		}
-	});
+	// OnPlayerDeath = UEventBus::AddLambda(this, PlayerState_Callback_Dies, [this]
+	// {
+	// 	AActor* CurrentTarget = Cast<AActor>(Blackboard->GetValueAsObject(TEXT("TargetActor")));
+	// 	if (CurrentTarget && CurrentTarget->ActorHasTag(ABRPlayerCharacter::DeadTag))
+	// 	{
+	// 		Blackboard->ClearValue(TEXT("TargetActor"));
+	// 		Blackboard->ClearValue(TEXT("LostLocation"));
+	// 	}
+	// });
 }
 
 void AAIController_Bacteria::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -36,7 +36,7 @@ void AAIController_Bacteria::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	
 	Blackboard->UnregisterObserversFrom(this);	
 
-	UEventBus::Remove(this, PlayerState_Callback_Dies, OnPlayerDeath);
+	//UEventBus::Remove(this, PlayerState_Callback_Dies, OnPlayerDeath);
 }
 
 void AAIController_Bacteria::OnSetupBlackboardKey(AAICharacter_Base* InPawn, UBlackboardComponent* BlackboardComponent)
@@ -53,29 +53,15 @@ void AAIController_Bacteria::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulu
 {
 	if (Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
 	{
-		if (Actor->ActorHasTag(ABRPlayerCharacter::DeadTag))
+		if (Stimulus.WasSuccessfullySensed())
 		{
+			Blackboard->ClearValue(TEXT("LostLocation"));
+			Blackboard->SetValueAsObject(TEXT("TargetActor"), Actor);
 			return;
 		}
 
-		AActor* CurrentTarget = Cast<AActor>(Blackboard->GetValueAsObject(TEXT("TargetActor")));
-
-		if (Stimulus.WasSuccessfullySensed())
-		{
-			if (CurrentTarget == nullptr)
-			{
-				Blackboard->ClearValue(TEXT("LostLocation"));
-				Blackboard->SetValueAsObject(TEXT("TargetActor"), Actor);
-			}
-		}
-		else
-		{
-			if (CurrentTarget == Actor)
-			{
-				Blackboard->ClearValue(TEXT("TargetActor"));
-				Blackboard->SetValueAsVector(TEXT("LostLocation"), Stimulus.StimulusLocation);
-			}
-		}
+		Blackboard->ClearValue(TEXT("TargetActor"));
+		Blackboard->SetValueAsVector(TEXT("LostLocation"), Stimulus.StimulusLocation);
 	}
 }
 

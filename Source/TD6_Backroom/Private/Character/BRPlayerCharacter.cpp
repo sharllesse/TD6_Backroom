@@ -119,8 +119,6 @@ void ABRPlayerCharacter::EnableRagdoll_Implementation()
 	{
 		PlayerController->RequestSwitchToSpectator();
 	}
-	
-	Tags.AddUnique(DeadTag);
 }
 
 void ABRPlayerCharacter::OnMove(const FInputActionValue& InputActionValue)

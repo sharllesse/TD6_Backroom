@@ -68,8 +68,6 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	virtual void Tick(float DeltaSeconds) override;
-
-	static inline const FName DeadTag{TEXT("Dead")};
 	
 protected:
 	template<typename Func>
@@ -96,7 +94,7 @@ protected:
 
 	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
 
-
+public:
 	UFUNCTION(NetMulticast, Reliable)
 	void EnableRagdoll();
 };
