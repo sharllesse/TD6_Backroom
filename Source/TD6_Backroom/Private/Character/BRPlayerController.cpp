@@ -9,6 +9,7 @@
 #include "GameMode/BRGameModeGameplayTags.h"
 #include "GameState/BRGameStateGameplayTags.h"
 #include "Online/BROnlineGameTags.h"
+#include "Perception/AIPerceptionSystem.h"
 #include "PlayerState/BRGamePlayerState.h"
 #include "PlayerState/BRPlayerStateGameTags.h"
 #include "UI/UIManagerSubsystem.h"
@@ -294,13 +295,19 @@ void ABRPlayerController::Server_SwitchToSpectator_Implementation()
 {
 	
 	UE_LOG(LogTemp, Error, TEXT("Switching to Spectator server"))
+
+	UnPossess();
 	
 	// if (auto DyingPawn = Cast<ABRPlayerCharacter>(GetPawn()))
 	// {
 	// 	DyingPawn->EnableRagdoll();
 	// }
+
+	// if (UAIPerceptionSystem* PerceptionSystem = UAIPerceptionSystem::GetCurrent(GetWorld()))
+	// {
+	// 	PerceptionSystem->Upda(); // re-scanne tous les listeners
+	// }
 	
-	UnPossess();
 	if (auto GamePlayerState = Cast<ABRGamePlayerState>(PlayerState))
 	{
 		GamePlayerState->SetToSpectator();

@@ -22,19 +22,16 @@ ABRPlayerCharacter::ABRPlayerCharacter()
 	CameraComponent->SetupAttachment(SpringArmComponent);
 
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("Interaction System"));
-	GenericTeamId = 0;
+	
 	StaminaComponent = CreateDefaultSubobject<UStaminaComponent>(TEXT("Stamina Component"));
 
-	
+	GenericTeamId = 0;
 }
 
 void ABRPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	if (UAIPerceptionSystem* PerceptionSystem = UAIPerceptionSystem::GetCurrent(GetWorld()))
-	{
-		PerceptionSystem->UnregisterSource(*this);
-	}
+
 	if (IsLocallyControlled())
 	{
 		UEventBus::LockSignature<const FTransform&>(this, Character_Callback_OnPlayerMove);
@@ -103,6 +100,8 @@ void ABRPlayerCharacter::GetActorEyesViewPoint(FVector& OutLocation, FRotator& O
 
 void ABRPlayerCharacter::EnableRagdoll_Implementation()
 {
+	Tags.AddUnique(Dead);
+	
 	if (UCapsuleComponent* CapsuleComp = GetCapsuleComponent())
 	{
 		CapsuleComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -119,8 +118,6 @@ void ABRPlayerCharacter::EnableRagdoll_Implementation()
 	{
 		PlayerController->RequestSwitchToSpectator();
 	}
-
-	Tags.AddUnique(Dead);
 }
 
 void ABRPlayerCharacter::OnMove(const FInputActionValue& InputActionValue)

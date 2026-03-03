@@ -51,6 +51,7 @@ void AAIController_Bacteria::OnSetupBlackboardKey(AAICharacter_Base* InPawn, UBl
 
 void AAIController_Bacteria::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
+	UE_LOG(LogTemp, Warning, TEXT("Player detected and is dead ? %d"), Actor->ActorHasTag(ABRPlayerCharacter::Dead))	
 	if (Actor->ActorHasTag(ABRPlayerCharacter::Dead))
 	{
 		return;

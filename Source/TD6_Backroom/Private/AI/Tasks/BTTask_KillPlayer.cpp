@@ -35,6 +35,9 @@ EBTNodeResult::Type UBTTask_KillPlayer::ExecuteTask(UBehaviorTreeComponent& Owne
 	
 	if (ABRPlayerCharacter* PlayerCharacter{ Cast<ABRPlayerCharacter>(PlayerObject) })
 	{
+		BlackboardComponent->ClearValue(TEXT("TargetActor"));
+		BlackboardComponent->ClearValue(TEXT("LostLocation"));
+		
 		PlayerCharacter->EnableRagdoll();	
 	}
 	
