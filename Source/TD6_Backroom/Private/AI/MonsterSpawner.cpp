@@ -4,6 +4,7 @@
 #include "AI/MonsterSpawner.h"
 
 #include "Chain.h"
+#include "Engine/TargetPoint.h"
 #include "GameInstance/BRGameInstance.h"
 
 
@@ -19,13 +20,22 @@ void AMonsterSpawner::BeginPlay()
 {
 	Super::BeginPlay();
 
+	
 	if (HasAuthority())
 	{
-		Chain::Execute(GetGameInstance<UBRGameInstance>(), [this](UBRGameInstance* GameInstance)
+		TArray<AActor*> SpawnPoint;
+		GetAttachedActors(SpawnPoint);
+		checkf(!SpawnPoint.IsEmpty(), TEXT("Monster spawner has no spawn point in his child"));
+		Chain::Execute(GetGameInstance<UBRGameInstance>(), [this, SpawnPoint](UBRGameInstance* GameInstance)
 		{
 			for (int i = 0; i < GameInstance->GetMonsterNumber(); ++i)
-			{
-				GetWorld()->SpawnActor<ACharacter>(MonsterToSpawn, GetActorLocation(), GetActorRotation());
+			{				
+				int SpawnIndex = FMath::RandRange(0, SpawnPoint.Num() - 1);
+				FTransform SpawnTransform = SpawnPoint[SpawnIndex]->GetActorTransform();
+				
+				UE_LOG(LogTemp, Error, TEXT("Spawning a monster at the spawn point %s"), *SpawnPoint[SpawnIndex]->GetName());
+				
+				GetWorld()->SpawnActor<ACharacter>(MonsterToSpawn, SpawnTransform);
 			}
 		});
 	}

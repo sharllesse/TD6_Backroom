@@ -82,6 +82,7 @@ public:
 	FString GetLocalPlayerUserName() const;
 
 	bool IsLogged() const;
+	bool IsHost() const;
 
 	void OpenGameWorld() const;
 private:

@@ -34,6 +34,11 @@ void UEndScreenWidget::SetState(State InState)
 			}
 			else
 			{
+				if (!Subsystem->IsHost())
+				{
+					return;
+				}
+				
 				Chain::Execute(GetGameInstance<UBRGameInstance>(), [](UBRGameInstance* GameInstance)
 				{
 					GameInstance->SetMonsterNumber(GameInstance->GetMonsterNumber() + 1);

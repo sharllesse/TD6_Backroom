@@ -48,6 +48,8 @@ void ABRGameGameMode::BeginPlay()
 		CheckIfAllPlayerAreDead();
 		CheckIfAllPlayerAreInExitZone();
 	});
+	
+	UEventBus::Broadcast(this, GameMode_Callback_OnBeginPlayFinish);
 
 }
 
@@ -101,7 +103,7 @@ void ABRGameGameMode::CheckIfAllPlayerAreInExitZone()
 
 void ABRGameGameMode::CheckIfAllPlayerAreDead()
 {
-	if (bAllPlayerAreDead)
+	if (bAllPlayerAreDead || bAllPlayerAreInExitZone)
 	{
 		return;
 	}

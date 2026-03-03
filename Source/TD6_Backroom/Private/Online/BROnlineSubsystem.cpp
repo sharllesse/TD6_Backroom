@@ -785,13 +785,26 @@ bool UBROnlineSubsystem::IsLogged() const
 	}, Online::GetIdentityInterface(World));
 }
 
+bool UBROnlineSubsystem::IsHost() const
+{
+	const UWorld* World{ GetWorld() };
+
+	return Internal_ExecuteOnValidContext([](const APlayerController* PlayerController)
+	{
+		return PlayerController->HasAuthority();
+	},
+	GetWorld()->GetFirstPlayerController());
+}
+
 void UBROnlineSubsystem::OpenGameWorld() const
 {
 	if (PlayerIsInSession())
 	{
-		const FName LoadedMapPath{ UBROnlineSettings::Get()->LoadedMapOnSessionStart.GetLongPackageName() };
-		const FString& LoadedMapOptions{ UBROnlineSettings::Get()->LoadedMapOptionsOnSessionStart };
-		UGameplayStatics::OpenLevel(this, LoadedMapPath, true, LoadedMapOptions);
+		const FString MapPath{ UBROnlineSettings::Get()->LoadedMapOnSessionStart.GetLongPackageName() };
+		const FString MapOptions{ UBROnlineSettings::Get()->LoadedMapOptionsOnSessionStart };
+		const FString URL{ FString::Printf(TEXT("%s?%s"), *MapPath, *MapOptions) };
+			
+		GetWorld()->ServerTravel(URL, true);
 	}
 }
 
