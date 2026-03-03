@@ -299,7 +299,6 @@ void ABRPlayerController::Server_SwitchToSpectator_Implementation()
 	// {
 	// 	DyingPawn->EnableRagdoll();
 	// }
-
 	
 	UnPossess();
 	if (auto GamePlayerState = Cast<ABRGamePlayerState>(PlayerState))

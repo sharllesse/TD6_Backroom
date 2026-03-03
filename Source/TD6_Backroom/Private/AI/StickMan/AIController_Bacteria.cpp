@@ -51,6 +51,11 @@ void AAIController_Bacteria::OnSetupBlackboardKey(AAICharacter_Base* InPawn, UBl
 
 void AAIController_Bacteria::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
+	if (Actor->ActorHasTag("Dead"))
+	{
+		return;
+	}
+	
 	if (Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
 	{
 		if (Stimulus.WasSuccessfullySensed())
@@ -65,8 +70,22 @@ void AAIController_Bacteria::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulu
 	}
 }
 
+ETeamAttitude::Type AAIController_Bacteria::GetTeamAttitudeTowards(const AActor& Other) const
+{
+	const IGenericTeamAgentInterface* GenericTeamAgentInterface{ Cast<const IGenericTeamAgentInterface>(&Other) };
+
+	if (!GenericTeamAgentInterface)
+	{
+		return ETeamAttitude::Neutral;
+	}
+
+	const uint8 OtherTeam{ GenericTeamAgentInterface->GetGenericTeamId() };
+	
+	return OtherTeam == GetGenericTeamId() ? ETeamAttitude::Friendly : ETeamAttitude::Hostile;
+}
+
 EBlackboardNotificationResult AAIController_Bacteria::OnSprintingStateChanged(const UBlackboardComponent&,
-	FBlackboard::FKey KeyID)
+                                                                              FBlackboard::FKey KeyID)
 {
 	const bool bIsSprinting{ Blackboard->GetValue<UBlackboardKeyType_Bool>(KeyID) };
 	

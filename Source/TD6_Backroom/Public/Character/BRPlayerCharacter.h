@@ -68,7 +68,8 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	virtual void Tick(float DeltaSeconds) override;
-	
+
+	static inline FName Dead{ "Dead" };
 protected:
 	template<typename Func>
 		void SetNotifyInteractCallback(Func&& Callback)

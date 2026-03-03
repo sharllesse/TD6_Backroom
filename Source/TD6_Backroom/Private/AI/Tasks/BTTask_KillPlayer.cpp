@@ -32,14 +32,10 @@ EBTNodeResult::Type UBTTask_KillPlayer::ExecuteTask(UBehaviorTreeComponent& Owne
 {
 	UBlackboardComponent* BlackboardComponent{ OwnerComp.GetBlackboardComponent() };
 	UObject* PlayerObject = BlackboardComponent->GetValueAsObject(PlayerToKill.SelectedKeyName);
-
-	if (IGenericTeamAgentInterface* GenericTeamAgentInterface{ Cast<IGenericTeamAgentInterface>(PlayerObject) })
-	{
-		GenericTeamAgentInterface->SetGenericTeamId(2);	
-	}
-
+	
 	if (ABRPlayerCharacter* PlayerCharacter{ Cast<ABRPlayerCharacter>(PlayerObject) })
 	{
+		PlayerCharacter->Tags.AddUnique(ABRPlayerCharacter::Dead);
 		PlayerCharacter->EnableRagdoll();	
 	}
 	

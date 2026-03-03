@@ -30,6 +30,8 @@ public:
 	
 	virtual void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus) override;
 
+	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
+
 private:
 	EBlackboardNotificationResult OnSprintingStateChanged(const UBlackboardComponent&, FBlackboard::FKey KeyID);
 };
