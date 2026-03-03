@@ -60,6 +60,11 @@ void AAIController_Bacteria::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulu
 	{
 		if (Stimulus.WasSuccessfullySensed())
 		{
+			if (Blackboard->GetValueAsObject(TEXT("TargetActor")))
+			{
+				return;
+			}
+			
 			Blackboard->ClearValue(TEXT("LostLocation"));
 			Blackboard->SetValueAsObject(TEXT("TargetActor"), Actor);
 			return;
