@@ -51,7 +51,7 @@ void AAIController_Bacteria::OnSetupBlackboardKey(AAICharacter_Base* InPawn, UBl
 
 void AAIController_Bacteria::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
-	if (Actor->ActorHasTag("Dead"))
+	if (Actor->ActorHasTag(ABRPlayerCharacter::Dead))
 	{
 		return;
 	}
@@ -80,6 +80,8 @@ ETeamAttitude::Type AAIController_Bacteria::GetTeamAttitudeTowards(const AActor&
 	}
 
 	const uint8 OtherTeam{ GenericTeamAgentInterface->GetGenericTeamId() };
+
+	UE_LOG(LogTemp, Error, TEXT("Team id %d, Other team %d"), GetGenericTeamId().GetId(), OtherTeam)
 	
 	return OtherTeam == GetGenericTeamId() ? ETeamAttitude::Friendly : ETeamAttitude::Hostile;
 }
