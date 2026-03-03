@@ -179,6 +179,9 @@ void UVivoxSubsystem::JoinLobbyVocalRoom(const FString& SessionName)
 
 void UVivoxSubsystem::Login()
 {
+	if (LoginSession)
+		return;
+	
 	TOptional<FString> UserName = Chain::StartChain(UBROnlineSubsystem::Get(GetWorld()))
 	.GetValue(&UBROnlineSubsystem::GetLocalPlayerUserName);
 	

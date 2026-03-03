@@ -16,4 +16,6 @@ class TD6_BACKROOM_API UBRGameInstance : public UGameInstance
 
 	virtual void Init() override;
 	virtual void Shutdown() override;
+
+	void HandleNetworkDisconnect(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
 };

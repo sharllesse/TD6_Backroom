@@ -57,6 +57,10 @@ public:
 	 */
 	UPROPERTY(Config, EditAnywhere, Category = "Session|Start", meta = (EditCondition = "bAutoLoadMapOnSessionStart"))
 	FString LoadedMapOptionsOnSessionStart{ TEXT("listen") };
+
+		
+	UPROPERTY(Config, EditAnywhere, Category = "Session|Disconnection", meta = (AllowedClasses = "/Script/Engine.World"))
+	FSoftObjectPath LoadedMapOnSessionDisconnection;
 	
 	static const ThisClass* Get() { return GetDefault<UBROnlineSettings>(); }
 };

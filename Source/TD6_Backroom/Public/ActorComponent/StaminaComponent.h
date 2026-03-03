@@ -40,6 +40,8 @@ protected:
 
 	bool bIsSprinting{false};
 
+	FTimerHolder StaminaRegenTimer;
+
 public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,

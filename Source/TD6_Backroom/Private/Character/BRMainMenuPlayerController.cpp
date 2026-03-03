@@ -11,6 +11,7 @@
 #include "Online/BROnlineSubsystem.h"
 #include "UI/UIManagerSubsystem.h"
 #include "UI/MainMenuWidget.h"
+#include "UI/WaitingLoginWidget.h"
 
 void ABRMainMenuPlayerController::BeginPlay()
 {
@@ -27,13 +28,41 @@ void ABRMainMenuPlayerController::BeginPlay()
 				Chain::StartChain(GetGameInstance())
 				.Transform([](UGameInstance* GameInstance){return GameInstance->GetSubsystem<UVivoxSubsystem>();})
 				.Execute(&UVivoxSubsystem::Login);
+				
+				Chain::StartChain(GetLocalPlayer())
+				.Transform([](ULocalPlayer* LocalPlayer)
+				{
+					return LocalPlayer->GetSubsystem<UUIManagerSubsystem>();
+				})
+				.Execute([](UUIManagerSubsystem* UIManager)
+				{
+					return UIManager->PopMenu();
+				});
 			}
 		});
 
 	DelegateHandles.Add(Online_Callback_OnLoginComplete, DelegateHandle);
 	SetupMainMenu();
-
 	
+	Chain::Execute(UBROnlineSubsystem::Get(GetWorld()), [this](UBROnlineSubsystem* Subsystem)
+	{
+		Subsystem->DestroySession();
+
+		if (!Subsystem->IsLogged())
+		{
+			Chain::StartChain(GetLocalPlayer())
+			.Transform([](ULocalPlayer* LocalPlayer)
+			{
+				return LocalPlayer->GetSubsystem<UUIManagerSubsystem>();
+			})
+			.Execute([](UUIManagerSubsystem* UIManager)
+			{
+				return UIManager->PushMenu<UWaitingLoginWidget>();
+			});
+		}
+	});
+	
+
 }
 
 void ABRMainMenuPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)

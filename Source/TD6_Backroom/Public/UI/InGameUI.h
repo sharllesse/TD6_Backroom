@@ -7,6 +7,7 @@
 #include "Components/TextBlock.h"
 #include "InGameUI.generated.h"
 
+class UProgressBar;
 /**
  * 
  */
@@ -22,6 +23,9 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> InteractText;
 
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UProgressBar> StaminaBar;
+
 	FDelegateHandle UpdateVHSTextHandle;
 	int MaxVHS{0};
 	
@@ -30,4 +34,6 @@ protected:
 
 public:
 	void SetCanInteract(bool bCanInteract, const FText& InteractionText) const;
+
+	void SetStaminaBar(float Current, float Max);
 };

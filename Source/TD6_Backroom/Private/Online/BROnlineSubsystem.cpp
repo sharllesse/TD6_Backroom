@@ -389,6 +389,9 @@ void UBROnlineSubsystem::OnDestroySessionCompleted(FName, bool bWasSuccessful)
 					TEXT("Session: The Destroying process of the session [Name: %s] was a success."),
 					*SessionName)
 			}
+			
+			const FName LoadedMapPath{ UBROnlineSettings::Get()->LoadedMapOnSessionDisconnection.GetLongPackageName() };
+			UGameplayStatics::OpenLevel(this, LoadedMapPath, true);
 
 			UEventBus::Broadcast<const FString&>(this, Online_Callback_OnDestroySessionCompleted,
 				SessionName, bWasSuccessful);
@@ -768,6 +771,17 @@ FString UBROnlineSubsystem::GetLocalPlayerUserName() const
 	[this](const IOnlineIdentityPtr& IdentityInterface)
 	{
 		return IdentityInterface->GetPlayerNickname(0);
+	}, Online::GetIdentityInterface(World));
+}
+
+bool UBROnlineSubsystem::IsLogged() const
+{
+	const UWorld* World{ GetWorld() };
+	
+	return Internal_ExecuteOnValidContext(
+	[this](const IOnlineIdentityPtr& IdentityInterface)
+	{
+		return IdentityInterface->GetLoginStatus(0) == ELoginStatus::LoggedIn;
 	}, Online::GetIdentityInterface(World));
 }
 

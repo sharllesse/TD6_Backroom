@@ -5,6 +5,7 @@
 
 #include "Chain.h"
 #include "EventBus.h"
+#include "Components/ProgressBar.h"
 #include "GameState/BRGameGameState.h"
 #include "Items/BRItemGameplayTag.h"
 #include "Items/ItemData.h"
@@ -41,4 +42,9 @@ void UInGameUI::SetCanInteract(bool bCanInteract, const FText& InteractionText) 
 {
 	InteractText->SetVisibility(bCanInteract ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
 	InteractText->SetText(FText::FromString(FString::Printf(TEXT("Press E to %s"), *InteractionText.ToString())));
+}
+
+void UInGameUI::SetStaminaBar(float Current, float Max)
+{
+	StaminaBar->SetPercent(Current / Max);
 }

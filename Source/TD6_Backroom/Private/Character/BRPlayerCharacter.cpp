@@ -41,11 +41,6 @@ void ABRPlayerCharacter::BeginPlay()
 			Server_OnSprint(false);
 			UpdateSprintState(false);
 		});
-		StaminaComponent->OnStaminaChange.BindLambda([this](float Current, float Max)
-		{
-			GEngine->AddOnScreenDebugMessage(0, 1.f, FColor::Red, FString::Printf(TEXT("%.2f/%.2f"),
-				Current,Max));
-		});
 	}
 
 	GetCharacterMovement()->MaxWalkSpeed = PlayerData->WalkSpeed;

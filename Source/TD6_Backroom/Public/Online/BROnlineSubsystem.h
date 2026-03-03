@@ -80,6 +80,8 @@ public:
 	TOptional<FString> GetSessionUID() const;
 	
 	FString GetLocalPlayerUserName() const;
+
+	bool IsLogged() const;
 private:
 	void OnLoggingCompleted(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error);
 	void OnLogoutCompleted(int32 LocalUserNum, bool bWasSuccessful);

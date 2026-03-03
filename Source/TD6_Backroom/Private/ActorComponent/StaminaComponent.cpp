@@ -49,6 +49,10 @@ void UStaminaComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		{
 			OnCantSprint.ExecuteIfBound();
 			SetComponentTickEnabled(false);
+			StaminaRegenTimer.Schedule([this]
+			{
+				SetComponentTickEnabled(true);
+			},{.bIsLooping = false, .Rate = 0.001,.FirstDelay = StaminaRegenStart});
 		}
 	}
 }
@@ -61,5 +65,10 @@ bool UStaminaComponent::CanSprint() const
 void UStaminaComponent::SetIsSprinting(bool bInIsSprinting)
 {
 	bIsSprinting = bInIsSprinting;
-	SetComponentTickEnabled(true);
+	SetComponentTickEnabled(bInIsSprinting);
+	StaminaRegenTimer.Schedule([this]
+	{
+		SetComponentTickEnabled(true);
+	},{.bIsLooping = false, .Rate = 0.001,.FirstDelay = StaminaRegenStart});
+	
 }

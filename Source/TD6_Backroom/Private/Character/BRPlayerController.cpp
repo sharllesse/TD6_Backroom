@@ -106,6 +106,11 @@ void ABRPlayerController::SetupLocalInfo()
 			InGameUI->SetCanInteract(bCanInteract, FText::FromString(TEXT("")));
 		}
 	});
+
+	GameCharacter->StaminaComponent->OnStaminaChange.BindLambda([this](float Current, float Max)
+	{
+		InGameUI->SetStaminaBar(Current, Max);
+	});
 }
 
 void ABRPlayerController::SetupInputComponent()
