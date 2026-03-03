@@ -2,14 +2,10 @@
 
 
 #include "AI/StickMan/AIController_Bacteria.h"
-
-#include "EventBus.h"
-#include "Linq.h"
 #include "AI/StickMan/AICharacter_Bacteria.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Bool.h"
 #include "Character/BRPlayerCharacter.h"
-#include "PlayerState/BRPlayerStateGameTags.h"
 
 AAIController_Bacteria::AAIController_Bacteria()
 {
@@ -51,7 +47,6 @@ void AAIController_Bacteria::OnSetupBlackboardKey(AAICharacter_Base* InPawn, UBl
 
 void AAIController_Bacteria::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Player detected and is dead ? %d"), Actor->ActorHasTag(ABRPlayerCharacter::Dead))	
 	if (Actor->ActorHasTag(ABRPlayerCharacter::Dead))
 	{
 		return;
@@ -72,6 +67,16 @@ void AAIController_Bacteria::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulu
 		}
 
 		Blackboard->ClearValue(TEXT("TargetActor"));
+		Blackboard->SetValueAsVector(TEXT("LostLocation"), Stimulus.StimulusLocation);
+	}
+
+	if (Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>())
+	{
+		if (Blackboard->GetValueAsObject(TEXT("TargetActor")))
+		{
+			return;
+		}
+
 		Blackboard->SetValueAsVector(TEXT("LostLocation"), Stimulus.StimulusLocation);
 	}
 }
