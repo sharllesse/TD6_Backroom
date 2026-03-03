@@ -16,7 +16,12 @@ AAIController_Base::AAIController_Base()
 	SenseConfig_Sight->DetectionByAffiliation.bDetectEnemies = true;
 	SenseConfig_Sight->DetectionByAffiliation.bDetectFriendlies = false;
 	SenseConfig_Sight->DetectionByAffiliation.bDetectNeutrals = false;
+	
 	PerceptionComponent->ConfigureSense(*SenseConfig_Sight);
+
+	SenseConfig_Hearing = CreateDefaultSubobject<UAISenseConfig_Hearing>("Hearing Sense");
+
+	PerceptionComponent->ConfigureSense(*SenseConfig_Hearing);
 
 	AAIController::SetGenericTeamId(1);
 }

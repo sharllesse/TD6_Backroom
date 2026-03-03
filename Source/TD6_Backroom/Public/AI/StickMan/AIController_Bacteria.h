@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "AI/AIController_Base.h"
-#include "BehaviorTree/Blackboard/BlackboardKey.h"
 #include "BehaviorTree/BehaviorTreeTypes.h"
+#include "BehaviorTree/Blackboard/BlackboardKey.h"
 #include "AIController_Bacteria.generated.h"
 
 class AAICharacter_Bacteria;

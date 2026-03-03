@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Perception/AISenseConfig_Hearing.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "Runtime/AIModule/Classes/AIController.h"
 #include "AIController_Base.generated.h"
@@ -21,6 +22,7 @@ protected:
 	TObjectPtr<UBehaviorTree> AssignedBehaviorTree;
 
 	TWeakObjectPtr<UAISenseConfig_Sight> SenseConfig_Sight;
+	TWeakObjectPtr<UAISenseConfig_Hearing> SenseConfig_Hearing;
 
 	TWeakObjectPtr<AAICharacter_Base> Character_Base;
 public:
