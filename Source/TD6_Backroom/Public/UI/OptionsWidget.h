@@ -6,6 +6,8 @@
 #include "Blueprint/UserWidget.h"
 #include "OptionsWidget.generated.h"
 
+class UTextBlock;
+class USlider;
 class UComboBoxString;
 class UButton;
 /**
@@ -25,17 +27,26 @@ protected:
 	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UComboBoxString> ListenerDropDown;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<USlider> MouseSensibility;
 	
-	static inline FString OptionSaveSlot{TEXT("Settings")};
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> TextMouseSensibility;
 	
 	UFUNCTION()
 	void OnBackButtonClicked();
 	
 	UFUNCTION()
 	void OnMicrophoneChange(FString SelectedItem, ESelectInfo::Type SelectionType);
+	void SetMicrophone(const FString& SelectedDevice);
 	
 	UFUNCTION()
 	void OnListenerChange(FString SelectedItem, ESelectInfo::Type SelectionType);
+	void SetListener(const FString& SelectedDevice);
+
+	UFUNCTION()
+	void OnMouseSensibilityChange(float NewValue);
 	
 	virtual void NativeConstruct() override;
 	

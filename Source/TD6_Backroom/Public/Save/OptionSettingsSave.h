@@ -20,4 +20,6 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Settings")
 	FString SpeakerDevice;
 
+	UPROPERTY(VisibleAnywhere, Category = "Settings")
+	float MouseSensibility{5.f};
 };

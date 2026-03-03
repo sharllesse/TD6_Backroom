@@ -37,6 +37,10 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly)
 	float PickUpRange{500.f};
+	
+	
+	UPROPERTY(EditDefaultsOnly)
+	float SphereRadius{30.f};
 public:
 
 	NotifyCanInteractSignature NotifyCanInteractEvent;

@@ -6,6 +6,7 @@
 #include "Engine/GameInstance.h"
 #include "BRGameInstance.generated.h"
 
+class UOptionSettingsSave;
 /**
  * 
  */
@@ -14,8 +15,19 @@ class TD6_BACKROOM_API UBRGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
 
+protected:
 	virtual void Init() override;
 	virtual void Shutdown() override;
 
 	void HandleNetworkDisconnect(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
+
+	UPROPERTY()
+	TObjectPtr<UOptionSettingsSave> OptionSettingsSave;
+
+	
+	static inline FString OptionSaveSlot{TEXT("Settings")};
+public:
+
+	UOptionSettingsSave* GetOptionsSettings();
+	void SaveOptionsSettings();
 };

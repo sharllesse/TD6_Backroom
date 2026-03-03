@@ -5,6 +5,7 @@
 #include "EnhancedInputComponent.h"
 #include "EventBus.h"
 #include "GameFramework/PlayerState.h"
+#include "GameInstance/BRGameInstance.h"
 #include "GameInstance/Subsystem/VivoxSubsystem.h"
 #include "GameMode/BRGameModeGameplayTags.h"
 #include "GameState/BRGameStateGameplayTags.h"
@@ -12,8 +13,11 @@
 #include "Perception/AIPerceptionSystem.h"
 #include "PlayerState/BRGamePlayerState.h"
 #include "PlayerState/BRPlayerStateGameTags.h"
+#include "Save/OptionSettingsSave.h"
 #include "UI/UIManagerSubsystem.h"
 #include "UI/InGameUI.h"
+#include "UI/OptionsWidget.h"
+#include "UI/PauseWidget.h"
 
 
 void ABRPlayerController::BeginPlay()
@@ -48,6 +52,12 @@ void ABRPlayerController::BeginPlay()
 			VivoxSubsystem->SwitchTo3DRoom();	
 		}
 	}
+
+	Chain::Execute(GetGameInstance<UBRGameInstance>(), [this](UBRGameInstance* GameInstance)
+	{
+		SaveSettings = GameInstance->GetOptionsSettings();
+	});
+	
 	//UEventBus::AddUObject(this, Online_Callback_OnExternalUIChange, this, &ABRPlayerController::OnExternalUIChange);
 }
 
@@ -220,8 +230,8 @@ void ABRPlayerController::OnLook(const FInputActionValue& InputActionValue)
 {
 	const FVector2D LookInput{InputActionValue.Get<FVector2D>()};
 	
-	AddPitchInput(LookInput.Y);
-	AddYawInput(LookInput.X);
+	AddPitchInput(LookInput.Y * SaveSettings->MouseSensibility);
+	AddYawInput(LookInput.X * SaveSettings->MouseSensibility);
 }
 
 void ABRPlayerController::OnJump(const FInputActionValue& InputActionValue) const
@@ -283,6 +293,21 @@ void ABRPlayerController::OnNextSpectate(const FInputActionValue& InputActionVal
 			SpecPawn->SpectateNextPlayer(ABRSpectatorPawn::IterationMethode::Previous);
 		});
 	}
+}
+
+void ABRPlayerController::OnOpenPauseMenu(const FInputActionValue& InputActionValue)
+{	
+	SetInputMode(FInputModeUIOnly());
+	bShowMouseCursor = true;
+	Chain::StartChain(GetLocalPlayer())
+	.Transform([](const ULocalPlayer* LocalPlayer)
+	{
+		return LocalPlayer->GetSubsystem<UUIManagerSubsystem>();
+	})
+	.Execute([](UUIManagerSubsystem* UIManager)
+	{
+		UIManager->PushMenu<UPauseWidget>();
+	});	
 }
 
 

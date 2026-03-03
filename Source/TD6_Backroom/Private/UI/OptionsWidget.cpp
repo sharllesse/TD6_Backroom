@@ -6,6 +6,9 @@
 #include "Chain.h"
 #include "Components/Button.h"
 #include "Components/ComboBoxString.h"
+#include "Components/Slider.h"
+#include "Components/TextBlock.h"
+#include "GameInstance/BRGameInstance.h"
 #include "GameInstance/Subsystem/VivoxSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Save/OptionSettingsSave.h"
@@ -26,18 +29,33 @@ void UOptionsWidget::OnBackButtonClicked()
 
 void UOptionsWidget::OnMicrophoneChange(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
-	Chain::Execute(GetGameInstance()->GetSubsystem<UVivoxSubsystem>(), [this, SelectedItem](UVivoxSubsystem* Subsystem)
+	SetMicrophone(SelectedItem);
+}
+
+void UOptionsWidget::SetMicrophone(const FString& SelectedDevice)
+{
+	Chain::Execute(GetGameInstance()->GetSubsystem<UVivoxSubsystem>(), [this, &SelectedDevice](UVivoxSubsystem* Subsystem)
 	{
-		Subsystem->SetMicrophone(SelectedItem);
+		Subsystem->SetMicrophone(SelectedDevice);
 	});
 }
 
 void UOptionsWidget::OnListenerChange(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
-	Chain::Execute(GetGameInstance()->GetSubsystem<UVivoxSubsystem>(), [this, SelectedItem](UVivoxSubsystem* Subsystem)
+	SetListener(SelectedItem);
+}
+
+void UOptionsWidget::SetListener(const FString& SelectedDevice)
 {
-	Subsystem->SetListener(SelectedItem);
-});
+	Chain::Execute(GetGameInstance()->GetSubsystem<UVivoxSubsystem>(), [this, &SelectedDevice](UVivoxSubsystem* Subsystem)
+	{
+		Subsystem->SetListener(SelectedDevice);
+	});
+}
+
+void UOptionsWidget::OnMouseSensibilityChange(float NewValue)
+{
+	TextMouseSensibility->SetText(FText::FromString(FString::Printf(TEXT("%.1f"), NewValue)));
 }
 
 void UOptionsWidget::NativeConstruct()
@@ -49,39 +67,61 @@ void UOptionsWidget::NativeConstruct()
 	
 	Chain::Execute(GetGameInstance()->GetSubsystem<UVivoxSubsystem>(), [this](UVivoxSubsystem* Subsystem)
 	{
+		bool bIsFirst{true};
 		for (auto Element : Subsystem->GetAllMicrophones())
 		{
+			if (bIsFirst)
+			{
+				bIsFirst = false;
+				SetMicrophone(Element);
+			}
 			MicrophoneDropDown->AddOption(Element);
 		}
+		
+		bIsFirst = {true};
 		for (auto Element : Subsystem->GetAllListeners())
 		{
+			if (bIsFirst)
+			{
+				bIsFirst = false;
+				SetListener(Element);
+			}
 			ListenerDropDown->AddOption(Element);
 		}
 	});
 	
 	MicrophoneDropDown->OnSelectionChanged.AddDynamic(this, &ThisClass::OnMicrophoneChange);
 	ListenerDropDown->OnSelectionChanged.AddDynamic(this, &ThisClass::OnListenerChange);
+	MouseSensibility->OnValueChanged.AddDynamic(this, &UOptionsWidget::OnMouseSensibilityChange);
 	
-	if (UGameplayStatics::DoesSaveGameExist(OptionSaveSlot, 0))
+	Chain::Execute(GetGameInstance<UBRGameInstance>(), [this](UBRGameInstance* GameInstance)
 	{
-		if (auto LoadedSettings = Cast<UOptionSettingsSave>(UGameplayStatics::LoadGameFromSlot(OptionSaveSlot, 0)))
+		if (auto Settings = GameInstance->GetOptionsSettings())
 		{
-			MicrophoneDropDown->SetSelectedOption(LoadedSettings->MicrophoneDevice);
-			ListenerDropDown->SetSelectedOption(LoadedSettings->SpeakerDevice);
+			MicrophoneDropDown->SetSelectedOption(Settings->MicrophoneDevice);
+			SetMicrophone(Settings->MicrophoneDevice);
+			ListenerDropDown->SetSelectedOption(Settings->SpeakerDevice);
+			SetListener(Settings->SpeakerDevice);
+			MouseSensibility->SetValue(Settings->MouseSensibility);
 		}
-	}
+	});
+
 }
 
 void UOptionsWidget::NativeDestruct()
 {
 	Super::NativeDestruct();
-	auto SaveInstance = Cast<UOptionSettingsSave>(UGameplayStatics::CreateSaveGameObject(UOptionSettingsSave::StaticClass()));
-    
-	if (SaveInstance != nullptr)
+	Chain::Execute(GetGameInstance<UBRGameInstance>(), [this](UBRGameInstance* GameInstance)
 	{
-		SaveInstance->MicrophoneDevice = MicrophoneDropDown->GetSelectedOption();
-		SaveInstance->SpeakerDevice = ListenerDropDown->GetSelectedOption();
-        
-		UGameplayStatics::SaveGameToSlot(SaveInstance, OptionSaveSlot, 0);
-	}
+		auto SaveInstance = GameInstance->GetOptionsSettings();
+	    
+		if (SaveInstance != nullptr)
+		{
+			SaveInstance->MicrophoneDevice = MicrophoneDropDown->GetSelectedOption();
+			SaveInstance->SpeakerDevice = ListenerDropDown->GetSelectedOption();
+			SaveInstance->MouseSensibility = MouseSensibility->GetValue();
+		}
+		GameInstance->SaveOptionsSettings();
+	});
+	
 }

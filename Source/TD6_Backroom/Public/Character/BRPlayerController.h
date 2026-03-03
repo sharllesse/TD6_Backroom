@@ -10,6 +10,7 @@
 #include "Character/BRSpectatorPawn.h"
 #include "BRPlayerController.generated.h"
 
+class UOptionSettingsSave;
 class UVivoxSubsystem;
 class UInGameUI;
 class UCreateRoomWidget;
@@ -58,6 +59,9 @@ protected:
 	TObjectPtr<UInGameUI> InGameUI;
 	
 	TWeakObjectPtr<UVivoxSubsystem> VivoxSubsystem;
+	TWeakObjectPtr<UOptionSettingsSave> SaveSettings;
+
+	bool bIsInPause{false};
 
 protected:
 	virtual void BeginPlay() override;
@@ -97,6 +101,9 @@ protected:
 
 	UFUNCTION()
 	void OnNextSpectate(const FInputActionValue& InputActionValue);
+	
+	UFUNCTION()
+	void OnOpenPauseMenu(const FInputActionValue& InputActionValue);
 
 	UFUNCTION(Server, Reliable)
 	void Server_SwitchToSpectator();
