@@ -35,7 +35,6 @@ EBTNodeResult::Type UBTTask_KillPlayer::ExecuteTask(UBehaviorTreeComponent& Owne
 	
 	if (ABRPlayerCharacter* PlayerCharacter{ Cast<ABRPlayerCharacter>(PlayerObject) })
 	{
-		PlayerCharacter->Tags.AddUnique(ABRPlayerCharacter::Dead);
 		PlayerCharacter->EnableRagdoll();	
 	}
 	
