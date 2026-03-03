@@ -17,7 +17,7 @@ class TD6_BACKROOM_API AAIController_Bacteria : public AAIController_Base
 
 	TWeakObjectPtr<AAICharacter_Bacteria> Character_Bacteria;
 	
-	FDelegateHandle OnPlayerDeath;
+	//FDelegateHandle OnPlayerDeath;
 	
 public:
 	AAIController_Bacteria();

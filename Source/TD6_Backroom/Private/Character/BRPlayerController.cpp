@@ -295,10 +295,10 @@ void ABRPlayerController::Server_SwitchToSpectator_Implementation()
 	
 	UE_LOG(LogTemp, Error, TEXT("Switching to Spectator server"))
 	
-	if (auto DyingPawn = Cast<ABRPlayerCharacter>(GetPawn()))
-	{
-		DyingPawn->EnableRagdoll();
-	}
+	// if (auto DyingPawn = Cast<ABRPlayerCharacter>(GetPawn()))
+	// {
+	// 	DyingPawn->EnableRagdoll();
+	// }
 
 	
 	UnPossess();

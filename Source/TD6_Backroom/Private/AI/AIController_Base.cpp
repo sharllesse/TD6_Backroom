@@ -13,6 +13,9 @@ AAIController_Base::AAIController_Base()
 	PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>("Perception Component");
 
 	SenseConfig_Sight = CreateDefaultSubobject<UAISenseConfig_Sight>("Sight Sense");
+	SenseConfig_Sight->DetectionByAffiliation.bDetectEnemies = true;
+	SenseConfig_Sight->DetectionByAffiliation.bDetectFriendlies = true;
+	SenseConfig_Sight->DetectionByAffiliation.bDetectNeutrals = false;
 	PerceptionComponent->ConfigureSense(*SenseConfig_Sight);
 
 	AAIController::SetGenericTeamId(1);
