@@ -75,7 +75,12 @@ void AAIController_Bacteria::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulu
 		{
 			return;
 		}
-		
+
+		if (!GetPawn())
+		{
+			return;
+		}
+			
 		const float Distance = FVector::Dist(GetPawn()->GetActorLocation(), Stimulus.StimulusLocation);
 
 		const float DistanceFactor = FMath::GetMappedRangeValueClamped(

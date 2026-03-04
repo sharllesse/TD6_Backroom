@@ -45,6 +45,11 @@ void AAICharacter_Bacteria::BeginPlay()
 		}
 	});
 
+	if (!HasAuthority())
+	{
+		return;
+	}
+	
 	RandomSoundTimer.Schedule([this]
 	{
 		AAIController* AIController = Cast<AAIController>(GetController());
