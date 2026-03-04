@@ -63,7 +63,7 @@ void UOptionsWidget::OnMouseSensibilityChange(float NewValue)
 void UOptionsWidget::OnVolumeChange(float NewValue)
 {
 	VolumeText->SetText(FText::FromString(FString::Printf(TEXT("%.1f"), NewValue)));
-	UEventBus::Broadcast(this, Settings_Callback_OnSoundChange, NewValue);
+	UEventBus::Broadcast(this, Settings_Callback_OnSoundChange, NewValue / VolumeSlider->GetMaxValue());
 }
 
 void UOptionsWidget::NativeConstruct()
