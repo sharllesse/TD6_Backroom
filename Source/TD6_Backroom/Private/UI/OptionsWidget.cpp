@@ -4,6 +4,7 @@
 #include "UI/OptionsWidget.h"
 
 #include "Chain.h"
+#include "EventBus.h"
 #include "Components/Button.h"
 #include "Components/ComboBoxString.h"
 #include "Components/Slider.h"
@@ -12,6 +13,7 @@
 #include "GameInstance/Subsystem/VivoxSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Save/OptionSettingsSave.h"
+#include "Save/SettingsGameplayTags.h"
 #include "UI/UIManagerSubsystem.h"
 
 void UOptionsWidget::OnBackButtonClicked()
@@ -58,6 +60,12 @@ void UOptionsWidget::OnMouseSensibilityChange(float NewValue)
 	TextMouseSensibility->SetText(FText::FromString(FString::Printf(TEXT("%.1f"), NewValue)));
 }
 
+void UOptionsWidget::OnVolumeChange(float NewValue)
+{
+	VolumeText->SetText(FText::FromString(FString::Printf(TEXT("%.1f"), NewValue)));
+	UEventBus::Broadcast(this, Settings_Callback_OnSoundChange, NewValue);
+}
+
 void UOptionsWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -84,6 +92,7 @@ void UOptionsWidget::NativeConstruct()
 	MicrophoneDropDown->OnSelectionChanged.AddDynamic(this, &ThisClass::OnMicrophoneChange);
 	ListenerDropDown->OnSelectionChanged.AddDynamic(this, &ThisClass::OnListenerChange);
 	MouseSensibility->OnValueChanged.AddDynamic(this, &UOptionsWidget::OnMouseSensibilityChange);
+	VolumeSlider->OnValueChanged.AddDynamic(this, &UOptionsWidget::OnVolumeChange);
 	
 	Chain::Execute(GetGameInstance<UBRGameInstance>(), [this](UBRGameInstance* GameInstance)
 	{
@@ -111,6 +120,7 @@ void UOptionsWidget::NativeDestruct()
 			SaveInstance->MicrophoneDevice = MicrophoneDropDown->GetSelectedOption();
 			SaveInstance->SpeakerDevice = ListenerDropDown->GetSelectedOption();
 			SaveInstance->MouseSensibility = MouseSensibility->GetValue();
+			SaveInstance->Volume = VolumeSlider->GetValue();
 		}
 		GameInstance->SaveOptionsSettings();
 	});

@@ -32,7 +32,7 @@ void AItemSpawner::BeginPlay()
 			Chain::Execute(GetWorld()->GetAuthGameMode<ABRGameGameMode>(), [this, &SpawnPoint](ABRGameGameMode* GameMode)
 			{
 				UE_LOG(LogTemp, Error, TEXT("Start spawning %d VHS"), GameMode->GetVhsObjective());
-				for (int i = 0; i < GameMode->GetVhsObjective(); ++i)
+				for (int i = 0; i < GameMode->GetVhsObjective() + 4; ++i)
 				{
 					checkf(!SpawnPoint.IsEmpty(), TEXT("Not enough spawn point for this item spawner"));
 				

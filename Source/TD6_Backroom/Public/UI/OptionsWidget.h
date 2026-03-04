@@ -34,6 +34,12 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> TextMouseSensibility;
 	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<USlider> VolumeSlider;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> VolumeText;
+	
 	UFUNCTION()
 	void OnBackButtonClicked();
 	
@@ -47,6 +53,9 @@ protected:
 
 	UFUNCTION()
 	void OnMouseSensibilityChange(float NewValue);
+	
+	UFUNCTION()
+	void OnVolumeChange(float NewValue);
 	
 	virtual void NativeConstruct() override;
 	

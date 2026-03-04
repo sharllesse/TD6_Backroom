@@ -22,4 +22,7 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = "Settings")
 	float MouseSensibility{5.f};
+	
+	UPROPERTY(VisibleAnywhere, Category = "Settings")
+	float Volume{50.f};
 };

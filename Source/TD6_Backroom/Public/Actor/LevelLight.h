@@ -27,11 +27,11 @@ protected:
 	
 	virtual void BeginPlay() override;
 	
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditAnywhere)
 	float FlickeringChance{1.f};
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditAnywhere)
 	FVector2D FlickeringRateChance{0.1f,0.3f};
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditAnywhere)
 	float CheckForFlickerRate{0.1f};
 	
 	bool bIsFlickering{false};
