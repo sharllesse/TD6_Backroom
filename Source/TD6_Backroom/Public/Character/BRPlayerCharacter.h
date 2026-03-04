@@ -110,5 +110,6 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void EnableRagdoll();
 
+	UFUNCTION(Client, Reliable)
 	void TriggerScreamer();
 };

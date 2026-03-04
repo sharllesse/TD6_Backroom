@@ -76,7 +76,7 @@ void AAIController_Bacteria::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulu
 			return;
 		}
 
-		if (IsValid(GetPawn()))
+		if (!IsValid(GetPawn()))
 		{
 			return;
 		}
@@ -152,7 +152,7 @@ void AAIController_Bacteria::MakeScreamNoise_Implementation()
 		StopChaseSoundTimer.Clear();
 		return;
 	}
-	
+	UE_LOG(LogTemp, Error, TEXT("%p"), Character_Bacteria->BacteriaData->ChaseScream.Get());
 	UPlayingSoundSubsystem::Get(this)->PlaySoundAttached(
 		Character_Bacteria->BacteriaData->ChaseScream, Character_Bacteria->GetMesh());
 }

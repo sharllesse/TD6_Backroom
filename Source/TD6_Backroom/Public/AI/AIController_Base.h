@@ -21,8 +21,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UBehaviorTree> AssignedBehaviorTree;
 
-	TWeakObjectPtr<UAISenseConfig_Sight> SenseConfig_Sight;
-	TWeakObjectPtr<UAISenseConfig_Hearing> SenseConfig_Hearing;
+	UPROPERTY()
+	TObjectPtr<UAISenseConfig_Sight> SenseConfig_Sight;
+	UPROPERTY()
+	TObjectPtr<UAISenseConfig_Hearing> SenseConfig_Hearing;
 
 	TWeakObjectPtr<AAICharacter_Base> Character_Base;
 public:

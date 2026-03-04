@@ -124,10 +124,11 @@ void ABRPlayerCharacter::GetActorEyesViewPoint(FVector& OutLocation, FRotator& O
 	OutRotation = GetBaseAimRotation();
 }
 
-void ABRPlayerCharacter::TriggerScreamer()
+void ABRPlayerCharacter::TriggerScreamer_Implementation()
 {
 	if (IsLocallyControlled() && ScreamerWidget)
 	{
+		Tags.AddUnique(Dead);
 		static_cast<APlayerController*>(Controller)->SetInputMode(FInputModeUIOnly());
 		ScreamerWidget->TriggerScreamer();
 		ScreamerSound->SetMediaPlayer(ScreamerWidget->GetMediaPlayer());

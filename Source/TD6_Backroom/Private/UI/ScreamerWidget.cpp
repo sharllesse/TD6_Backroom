@@ -21,6 +21,7 @@ void UScreamerWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 	SetVisibility(ESlateVisibility::Hidden);
+	ScreamerMediaPlayer->OnEndReached.AddDynamic(this, &UScreamerWidget::OnEndReached);
 }
 
 
@@ -33,7 +34,6 @@ void UScreamerWidget::TriggerScreamer()
 	SetVisibility(ESlateVisibility::Visible);
 
 		
-	ScreamerMediaPlayer->OnEndReached.AddDynamic(this, &UScreamerWidget::OnEndReached);
 
 	ScreamerMediaPlayer->Rewind();
 	ScreamerMediaPlayer->Play();
