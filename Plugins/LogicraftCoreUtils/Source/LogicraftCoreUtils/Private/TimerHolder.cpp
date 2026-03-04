@@ -38,16 +38,24 @@ void FTimerHolder::Clear()
 	}
 }
 
-bool FTimerHolder::IsPaused() const
+bool FTimerHolder::IsPaused()
 {
-	TIMER_HOLDER_CHECK();
-	return TimerManager->IsTimerPaused(TimerHandle);
+	if (TIMER_HOLDER_ENSURE())
+	{
+		return TimerManager->IsTimerPaused(TimerHandle);	
+	}
+
+	return true;
 }
 
-bool FTimerHolder::IsAlreadyRunning() const
+bool FTimerHolder::IsAlreadyRunning()
 {
-	TIMER_HOLDER_CHECK();
-	return TimerManager->TimerExists(TimerHandle);
+	if (TIMER_HOLDER_ENSURE())
+	{
+		return TimerManager->TimerExists(TimerHandle);	
+	}
+
+	return false;
 }
 
 float FTimerHolder::GetElapsedTime() const

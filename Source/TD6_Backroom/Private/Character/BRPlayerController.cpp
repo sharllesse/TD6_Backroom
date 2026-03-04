@@ -15,6 +15,7 @@
 #include "PlayerState/BRGamePlayerState.h"
 #include "PlayerState/BRPlayerStateGameTags.h"
 #include "Save/OptionSettingsSave.h"
+#include "Sound/PlayingSoundSubsystem.h"
 #include "UI/EndScreenWidget.h"
 #include "UI/UIManagerSubsystem.h"
 #include "UI/InGameUI.h"
@@ -28,19 +29,11 @@
 void ABRPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	 
 	
-
 	if (IsLocalController())
 	{
 		SetupLocalInfo();
 	}
-	
-
-	UEventBus::AddLambda(this, GameMode_Callback_OnAllPlayerInExitZone, []
-		{
-			GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Red, TEXT("All player in exit zone."));
-		});
 	
 	if (IsLocalController())
 	{
@@ -56,8 +49,6 @@ void ABRPlayerController::BeginPlay()
 	{
 		SaveSettings = GameInstance->GetOptionsSettings();
 	});
-	
-	//UEventBus::AddUObject(this, Online_Callback_OnExternalUIChange, this, &ABRPlayerController::OnExternalUIChange);
 }
 
 void ABRPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -121,8 +112,8 @@ void ABRPlayerController::SetupLocalInfo()
 			InGameUI->SetCanInteract(bCanInteract, FText::FromString(TEXT("")));
 		}
 	});
-
-	UGameplayStatics::PlaySound2D(this, GeneralAmbianceSound);
+	
+	UPlayingSoundSubsystem::Get(this)->PlaySound2D(GeneralAmbianceSound);
 
 	GameCharacter->StaminaComponent->OnStaminaChange.BindLambda([this](float Current, float Max)
 	{

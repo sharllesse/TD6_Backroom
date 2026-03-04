@@ -4,11 +4,14 @@
 #include "AI/StickMan/AICharacter_Bacteria.h"
 
 #include "EventBus.h"
+#include "AI/AIController_Base.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameState/BRGameGameState.h"
 #include "Items/BRItemGameplayTag.h"
 #include "Items/ItemData.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/PlayingSoundSubsystem.h"
 #include "Sound/SoundCue.h"
 
 AAICharacter_Bacteria::AAICharacter_Bacteria()
@@ -39,15 +42,17 @@ void AAICharacter_Bacteria::BeginPlay()
 			}
 
 			MaxVHSpeed += BacteriaData->SprintSpeed / GameState->VhsToCollect;
-			// MaxVHSpeed = 25.f * (ItemData.Count / GameState->VhsToCollect * 10.f);
 		}
 	});
 
 	RandomSoundTimer.Schedule([this]
 	{
-		//Do rpc to replicate on other players.
-		UGameplayStatics::SpawnSoundAttached(BacteriaData->RandomSound, GetMesh());
-	}, { true, 25.f, 10.f });
+		if (!AIController_Base->GetBlackboardComponent()->GetValueAsObject("TargetActor"))
+		{
+			MakeRandomNoise();
+		}
+	},
+	{ true, 25.f, 10.f });
 }
 
 void AAICharacter_Bacteria::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -71,4 +76,10 @@ void AAICharacter_Bacteria::UpdateSprintState(bool bShouldSprint)
 		GetCharacterMovement()->MaxWalkSpeed = BacteriaData->WalkSpeed;
 		GetCharacterMovement()->MaxAcceleration = BacteriaData->WalkSpeed * BacteriaData->AccelerationModifier;
 	}
+}
+
+void AAICharacter_Bacteria::MakeRandomNoise_Implementation()
+{
+	UPlayingSoundSubsystem::Get(this)
+		->PlaySoundAttached(BacteriaData->RandomSound, GetMesh());
 }

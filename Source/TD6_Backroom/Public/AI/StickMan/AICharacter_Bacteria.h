@@ -27,6 +27,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	TObjectPtr<USoundCue> RandomSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TObjectPtr<USoundCue> ChaseScream;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Hearing")
+	float SprintThreshold{ 0.5f };
 };
 
 class AAIController_Bacteria;
@@ -57,4 +63,7 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	void UpdateSprintState(bool bShouldSprint);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MakeRandomNoise();
 };

@@ -5,7 +5,11 @@
 #include "AI/StickMan/AICharacter_Bacteria.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Bool.h"
+#include "BehaviorTree/Blackboard/BlackboardKeyType_Object.h"
 #include "Character/BRPlayerCharacter.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/PlayingSoundSubsystem.h"
+#include "Sound/SoundCue.h"
 
 AAIController_Bacteria::AAIController_Bacteria()
 {
@@ -15,24 +19,13 @@ AAIController_Bacteria::AAIController_Bacteria()
 void AAIController_Bacteria::BeginPlay()
 {
 	Super::BeginPlay();
-	// OnPlayerDeath = UEventBus::AddLambda(this, PlayerState_Callback_Dies, [this]
-	// {
-	// 	AActor* CurrentTarget = Cast<AActor>(Blackboard->GetValueAsObject(TEXT("TargetActor")));
-	// 	if (CurrentTarget && CurrentTarget->ActorHasTag(ABRPlayerCharacter::DeadTag))
-	// 	{
-	// 		Blackboard->ClearValue(TEXT("TargetActor"));
-	// 		Blackboard->ClearValue(TEXT("LostLocation"));
-	// 	}
-	// });
 }
 
 void AAIController_Bacteria::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 	
-	Blackboard->UnregisterObserversFrom(this);	
-
-	//UEventBus::Remove(this, PlayerState_Callback_Dies, OnPlayerDeath);
+	Blackboard->UnregisterObserversFrom(this);
 }
 
 void AAIController_Bacteria::OnSetupBlackboardKey(AAICharacter_Base* InPawn, UBlackboardComponent* BlackboardComponent)
@@ -43,6 +36,11 @@ void AAIController_Bacteria::OnSetupBlackboardKey(AAICharacter_Base* InPawn, UBl
 		BlackboardComponent->GetKeyID("IsSprinting"),
 		this,
 		FOnBlackboardChangeNotification::CreateUObject(this, &AAIController_Bacteria::OnSprintingStateChanged));
+
+	BlackboardComponent->RegisterObserver(
+		BlackboardComponent->GetKeyID("TargetActor"),
+		this,
+		FOnBlackboardChangeNotification::CreateUObject(this, &AAIController_Bacteria::OnTargetActorChanged));
 }
 
 void AAIController_Bacteria::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
@@ -63,6 +61,7 @@ void AAIController_Bacteria::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulu
 			
 			Blackboard->ClearValue(TEXT("LostLocation"));
 			Blackboard->SetValueAsObject(TEXT("TargetActor"), Actor);
+			
 			return;
 		}
 
@@ -76,7 +75,24 @@ void AAIController_Bacteria::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulu
 		{
 			return;
 		}
+		
+		const float Distance = FVector::Dist(GetPawn()->GetActorLocation(), Stimulus.StimulusLocation);
 
+		const float DistanceFactor = FMath::GetMappedRangeValueClamped(
+					FVector2D(0.0f, SenseConfig_Hearing->HearingRange),
+					FVector2D(1.0f, 0.0f),
+					Distance
+				);
+
+		const float PerceivedLoudness = Stimulus.Strength * DistanceFactor;
+
+		UE_LOG(LogTemp, Warning, TEXT("%f"), PerceivedLoudness)
+		
+		if (PerceivedLoudness > Character_Bacteria->BacteriaData->SprintThreshold)
+		{
+			Blackboard->SetValueAsBool(TEXT("IsSprinting"), true);
+		}
+		
 		Blackboard->SetValueAsVector(TEXT("LostLocation"), Stimulus.StimulusLocation);
 	}
 }
@@ -105,4 +121,41 @@ EBlackboardNotificationResult AAIController_Bacteria::OnSprintingStateChanged(co
 	Character_Bacteria->UpdateSprintState(bIsSprinting);
 	
 	return EBlackboardNotificationResult::ContinueObserving;
+}
+
+EBlackboardNotificationResult AAIController_Bacteria::OnTargetActorChanged(const UBlackboardComponent&,
+	FBlackboard::FKey KeyID)
+{
+	bool bIsValid{ IsValid(Blackboard->GetValue<UBlackboardKeyType_Object>(KeyID)) };
+	
+	if (bIsValid)
+	{
+		MakeScreamNoise();
+		
+		return EBlackboardNotificationResult::ContinueObserving;
+	}
+
+	StopScreamNoise();
+	
+	return EBlackboardNotificationResult::ContinueObserving;
+}
+
+void AAIController_Bacteria::MakeScreamNoise_Implementation()
+{
+	if (StopChaseSoundTimer.IsAlreadyRunning())
+	{
+		StopChaseSoundTimer.Clear();
+		return;
+	}
+	
+	UPlayingSoundSubsystem::Get(this)->PlaySoundAttached(
+		Character_Bacteria->BacteriaData->ChaseScream, Character_Bacteria->GetMesh());
+}
+
+void AAIController_Bacteria::StopScreamNoise_Implementation()
+{
+	StopChaseSoundTimer.Schedule([this]
+	{
+		UPlayingSoundSubsystem::Get(this)->StopSound(Character_Bacteria->BacteriaData->ChaseScream);
+	}, { false, 2.5f });
 }

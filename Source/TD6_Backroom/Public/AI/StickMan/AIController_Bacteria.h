@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "TimerHolder.h"
 #include "AI/AIController_Base.h"
 #include "BehaviorTree/BehaviorTreeTypes.h"
 #include "BehaviorTree/Blackboard/BlackboardKey.h"
@@ -16,9 +17,8 @@ class TD6_BACKROOM_API AAIController_Bacteria : public AAIController_Base
 	GENERATED_BODY()
 
 	TWeakObjectPtr<AAICharacter_Bacteria> Character_Bacteria;
-	
-	//FDelegateHandle OnPlayerDeath;
-	
+
+	FTimerHolder StopChaseSoundTimer;
 public:
 	AAIController_Bacteria();
 
@@ -34,4 +34,11 @@ public:
 
 private:
 	EBlackboardNotificationResult OnSprintingStateChanged(const UBlackboardComponent&, FBlackboard::FKey KeyID);
+	EBlackboardNotificationResult OnTargetActorChanged(const UBlackboardComponent&, FBlackboard::FKey KeyID);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MakeScreamNoise();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void StopScreamNoise();
 };

@@ -72,8 +72,8 @@ public:
 	void Pause();
 	void Clear();
 
-	bool IsPaused() const;
-	bool IsAlreadyRunning() const;
+	bool IsPaused();
+	bool IsAlreadyRunning();
 
 	float GetElapsedTime() const;
 	float GetRate() const;

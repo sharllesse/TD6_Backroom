@@ -25,7 +25,7 @@ protected:
 	float Loudness{ 1.f };
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AnimNotify")
-	float MaxRange{ 1000.f };
+	float MaxRange{ 1500.f };
 public:
 	virtual FString GetNotifyName_Implementation() const override;
 
