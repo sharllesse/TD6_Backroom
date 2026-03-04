@@ -104,7 +104,7 @@ FString UVivoxSubsystem::FormatChannelSessionName(const FString& InputString)
 
 void UVivoxSubsystem::Join3DVocalRoom(const FString& SessionName)
 {
-	Channel3DProperties Properties(1800,800,1.f, EAudioFadeModel::InverseByDistance);
+	Channel3DProperties Properties(2500,1000,1.f, EAudioFadeModel::InverseByDistance);
 	
 	ChannelId NewChannelId(TokenIssuer, FormatChannelSessionName(SessionName + TEXT("_Game")), Domain, ChannelType::Positional, Properties);
 	IChannelSession& NewChannelSession(LoginSession->GetChannelSession(NewChannelId));
