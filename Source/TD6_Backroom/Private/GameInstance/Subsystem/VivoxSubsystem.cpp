@@ -128,7 +128,6 @@ void UVivoxSubsystem::Join3DVocalRoom(const FString& SessionName)
 		{
 			VoiceClient->AudioInputDevices().SetMuted(false);
 			VoiceClient->AudioOutputDevices().SetMuted(false);
-			LoginSession->SetTransmissionMode(TransmissionMode::Single, InGameChannelID);
 						
 			UE_LOG(Log_BRVivox, Log, TEXT("InGame Channel %s fully connected audio state is connected = %d"), *ChannelName, (int)(InGameChannelSession->AudioState() == ConnectionState::Connected));
 		}
@@ -167,7 +166,6 @@ void UVivoxSubsystem::JoinLobbyVocalRoom(const FString& SessionName)
 		{ 
 			VoiceClient->AudioInputDevices().SetMuted(false);
 			VoiceClient->AudioOutputDevices().SetMuted(false);
-			LoginSession->SetTransmissionMode(TransmissionMode::Single, LobbyChannelID);
 			
 			UE_LOG(Log_BRVivox, Log, TEXT("Lobby Channel %s fully connected audio state is connected = %d"), *ChannelName, (int)(LobbyChannelSession->AudioState() == ConnectionState::Connected));
 		}
