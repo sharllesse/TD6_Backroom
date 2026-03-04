@@ -54,6 +54,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inputs|Spectator")
 	TArray<FAction> SpectatorInputActions;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TObjectPtr<USoundCue> GeneralAmbianceSound;
+
 	TWeakObjectPtr<ABRPlayerCharacter> GameCharacter;
 	TWeakObjectPtr<ABRSpectatorPawn> CustomSpectatorPawn;
 

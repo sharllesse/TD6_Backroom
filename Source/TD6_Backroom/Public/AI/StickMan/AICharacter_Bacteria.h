@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "TimerHolder.h"
 #include "AI/AICharacter_Base.h"
 #include "AICharacter_Bacteria.generated.h"
 
@@ -23,6 +24,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "Movement")
 	bool bIsSprinting{false};
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TObjectPtr<USoundCue> RandomSound;
 };
 
 class AAIController_Bacteria;
@@ -41,6 +45,8 @@ protected:
 	float MaxVHSpeed{ 0.f };
 
 	FDelegateHandle Handle;
+
+	FTimerHolder RandomSoundTimer;
 	
 public:
 	AAICharacter_Bacteria();

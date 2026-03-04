@@ -8,6 +8,8 @@
 #include "GameState/BRGameGameState.h"
 #include "Items/BRItemGameplayTag.h"
 #include "Items/ItemData.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
 
 AAICharacter_Bacteria::AAICharacter_Bacteria()
 {
@@ -40,6 +42,12 @@ void AAICharacter_Bacteria::BeginPlay()
 			// MaxVHSpeed = 25.f * (ItemData.Count / GameState->VhsToCollect * 10.f);
 		}
 	});
+
+	RandomSoundTimer.Schedule([this]
+	{
+		//Do rpc to replicate on other players.
+		UGameplayStatics::SpawnSoundAttached(BacteriaData->RandomSound, GetMesh());
+	}, { true, 25.f, 10.f });
 }
 
 void AAICharacter_Bacteria::EndPlay(const EEndPlayReason::Type EndPlayReason)

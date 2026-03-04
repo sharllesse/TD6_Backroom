@@ -36,6 +36,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "Movement")
 	bool bIsSprinting{false};
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TObjectPtr<USoundCue> NoStaminaSound;
 };
 
 UCLASS()

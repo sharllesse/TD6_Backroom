@@ -9,6 +9,7 @@
 #include "GameInstance/Subsystem/VivoxSubsystem.h"
 #include "GameMode/BRGameModeGameplayTags.h"
 #include "GameState/BRGameStateGameplayTags.h"
+#include "Kismet/GameplayStatics.h"
 #include "Online/BROnlineGameTags.h"
 #include "Perception/AIPerceptionSystem.h"
 #include "PlayerState/BRGamePlayerState.h"
@@ -17,6 +18,7 @@
 #include "UI/EndScreenWidget.h"
 #include "UI/UIManagerSubsystem.h"
 #include "UI/InGameUI.h"
+#include "Sound/SoundCue.h"
 #include "UI/SpectatorWidget.h"
 #include "UI/OptionsWidget.h"
 #include "UI/EndScreenWidget.h"
@@ -93,7 +95,6 @@ void ABRPlayerController::SetupLocalInfo()
 	SetInputMode(FInputModeGameOnly());
 	bShowMouseCursor = false; 
 	
-		
 	UEventBus::AddLambda(this, Online_Callback_OnMainExternalUIOverlayChange, [this](bool bIsOpening)
 	{
 		if (bIsOpening)
@@ -120,6 +121,8 @@ void ABRPlayerController::SetupLocalInfo()
 			InGameUI->SetCanInteract(bCanInteract, FText::FromString(TEXT("")));
 		}
 	});
+
+	UGameplayStatics::PlaySound2D(this, GeneralAmbianceSound);
 
 	GameCharacter->StaminaComponent->OnStaminaChange.BindLambda([this](float Current, float Max)
 	{
@@ -186,7 +189,6 @@ void ABRPlayerController::SetupInputComponent()
 
 void ABRPlayerController::OnPossessPawnLocalLogic(APawn* InPawn)
 {
-	UE_LOG(LogTemp, Error, TEXT("OnPossessPawnLocalLogic"));
 	if (auto IsGameCharacter = Cast<ABRPlayerCharacter>(InPawn))
 	{
 		GameCharacter = IsGameCharacter;
@@ -194,7 +196,6 @@ void ABRPlayerController::OnPossessPawnLocalLogic(APawn* InPawn)
 	}
 	else if (auto IsSpectatorCharacter = Cast<ABRSpectatorPawn>(InPawn);IsSpectatorCharacter && StateName == NAME_Spectating)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Switching to Spectator controller"));
 		CustomSpectatorPawn = IsSpectatorCharacter;
 		SwitchMappingContext(NAME_Spectating);
 		if (VivoxSubsystem.IsValid())

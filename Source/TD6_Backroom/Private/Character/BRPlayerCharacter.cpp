@@ -11,11 +11,12 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameInstance/BRGameInstance.h"
-#include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AIPerceptionSystem.h"
 #include "Save/OptionSettingsSave.h"
 #include "UI/ScreamerWidget.h"
 #include "UI/UIManagerSubsystem.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
 
 ABRPlayerCharacter::ABRPlayerCharacter()
 {
@@ -49,6 +50,8 @@ void ABRPlayerCharacter::BeginPlay()
 		{
 			Server_OnSprint(false);
 			UpdateSprintState(false);
+
+			UGameplayStatics::PlaySound2D(this, PlayerData->NoStaminaSound);
 		});
 	}
 
