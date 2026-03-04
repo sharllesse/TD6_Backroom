@@ -35,10 +35,4 @@ public:
 private:
 	EBlackboardNotificationResult OnSprintingStateChanged(const UBlackboardComponent&, FBlackboard::FKey KeyID);
 	EBlackboardNotificationResult OnTargetActorChanged(const UBlackboardComponent&, FBlackboard::FKey KeyID);
-
-	UFUNCTION(NetMulticast, Reliable)
-	void MakeScreamNoise();
-
-	UFUNCTION(NetMulticast, Reliable)
-	void StopScreamNoise();
 };

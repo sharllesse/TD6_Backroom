@@ -90,3 +90,23 @@ void AAICharacter_Bacteria::MakeRandomNoise_Implementation()
 	UPlayingSoundSubsystem::Get(this)
 		->PlaySoundAttached(BacteriaData->RandomSound, GetMesh());
 }
+
+void AAICharacter_Bacteria::StopScreamNoise_Implementation()
+{
+	if (StopChaseSoundTimer.IsAlreadyRunning())
+	{
+		StopChaseSoundTimer.Clear();
+		return;
+	}
+
+	UPlayingSoundSubsystem::Get(this)->PlaySoundAttached(
+		BacteriaData->ChaseScream, GetMesh());
+}
+
+void AAICharacter_Bacteria::MakeScreamNoise_Implementation()
+{
+	StopChaseSoundTimer.Schedule([this]
+	{
+		UPlayingSoundSubsystem::Get(this)->StopSound(BacteriaData->ChaseScream);
+	}, { false, 2.5f });
+}

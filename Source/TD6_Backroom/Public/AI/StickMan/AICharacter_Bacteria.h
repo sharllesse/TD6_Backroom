@@ -53,6 +53,8 @@ protected:
 	FDelegateHandle Handle;
 
 	FTimerHolder RandomSoundTimer;
+
+	FTimerHolder StopChaseSoundTimer;
 	
 public:
 	AAICharacter_Bacteria();
@@ -66,4 +68,10 @@ protected:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MakeRandomNoise();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MakeScreamNoise();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void StopScreamNoise();
 };

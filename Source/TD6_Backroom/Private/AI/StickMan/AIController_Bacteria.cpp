@@ -135,32 +135,12 @@ EBlackboardNotificationResult AAIController_Bacteria::OnTargetActorChanged(const
 	
 	if (bIsValid)
 	{
-		MakeScreamNoise();
-		
+		Character_Bacteria->MakeScreamNoise();
+
 		return EBlackboardNotificationResult::ContinueObserving;
 	}
 
-	StopScreamNoise();
+	Character_Bacteria->StopScreamNoise();
 	
 	return EBlackboardNotificationResult::ContinueObserving;
-}
-
-void AAIController_Bacteria::MakeScreamNoise_Implementation()
-{
-	if (StopChaseSoundTimer.IsAlreadyRunning())
-	{
-		StopChaseSoundTimer.Clear();
-		return;
-	}
-	UE_LOG(LogTemp, Error, TEXT("%p"), Character_Bacteria->BacteriaData->ChaseScream.Get());
-	UPlayingSoundSubsystem::Get(this)->PlaySoundAttached(
-		Character_Bacteria->BacteriaData->ChaseScream, Character_Bacteria->GetMesh());
-}
-
-void AAIController_Bacteria::StopScreamNoise_Implementation()
-{
-	StopChaseSoundTimer.Schedule([this]
-	{
-		UPlayingSoundSubsystem::Get(this)->StopSound(Character_Bacteria->BacteriaData->ChaseScream);
-	}, { false, 2.5f });
 }
