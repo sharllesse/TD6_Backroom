@@ -76,7 +76,7 @@ void AAIController_Bacteria::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulu
 			return;
 		}
 
-		if (!GetPawn())
+		if (IsValid(GetPawn()))
 		{
 			return;
 		}
