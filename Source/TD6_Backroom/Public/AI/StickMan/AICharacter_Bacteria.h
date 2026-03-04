@@ -7,6 +7,8 @@
 #include "AI/AICharacter_Base.h"
 #include "AICharacter_Bacteria.generated.h"
 
+class USoundCue;
+
 UCLASS()
 class UBRBacteriaData : public UPrimaryDataAsset
 {

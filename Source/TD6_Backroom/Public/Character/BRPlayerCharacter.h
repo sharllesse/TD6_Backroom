@@ -15,6 +15,7 @@
 class UMediaSoundComponent;
 class UScreamerWidget;
 class UInteractionComponent;
+class USoundCue;
 
 UCLASS()
 class UBRPlayerData : public UPrimaryDataAsset

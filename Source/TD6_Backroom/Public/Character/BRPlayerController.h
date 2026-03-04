@@ -17,6 +17,7 @@ class UVivoxSubsystem;
 class UInGameUI;
 class UCreateRoomWidget;
 class UMainMenuWidget;
+class USoundCue;
 
 USTRUCT(BlueprintType, Blueprintable)
 struct FAction
