@@ -71,6 +71,7 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	TObjectPtr<UStaminaComponent> StaminaComponent;
+
 public:
 	// Sets default values for this character's properties
 	ABRPlayerCharacter();
@@ -106,9 +107,12 @@ protected:
 
 	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
 
-public:
 	UFUNCTION(NetMulticast, Reliable)
 	void EnableRagdoll();
+public:
+
+	UFUNCTION(Server, Reliable)
+	void Server_EnableRagdoll();
 
 	UFUNCTION(Client, Reliable)
 	void TriggerScreamer();

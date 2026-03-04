@@ -39,7 +39,6 @@ EBTNodeResult::Type UBTTask_KillPlayer::ExecuteTask(UBehaviorTreeComponent& Owne
 		BlackboardComponent->ClearValue(TEXT("LostLocation"));
 
 		PlayerCharacter->TriggerScreamer();
-		//PlayerCharacter->EnableRagdoll();
 	}
 	
 	return EBTNodeResult::Succeeded;

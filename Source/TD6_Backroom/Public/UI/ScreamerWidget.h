@@ -50,4 +50,6 @@ public:
 	UMediaPlayer* GetMediaPlayer() const;
 
 	void SetupScreamer(UMediaSoundComponent* SoundComponent);
+
+	bool IsPlaying() const;
 };

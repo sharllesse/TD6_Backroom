@@ -366,7 +366,11 @@ void ABRPlayerController::Client_SwitchToSpectator_Implementation()
 	
 	if (IsLocalController())
 	{
-		SpectatorWidget = GetLocalPlayer()->GetSubsystem<UUIManagerSubsystem>()->CreateWidget<USpectatorWidget>();
+		if (!SpectatorWidget)
+		{
+			SpectatorWidget = GetLocalPlayer()->GetSubsystem<UUIManagerSubsystem>()->CreateWidget<USpectatorWidget>();
+		}
+		
 	
 		if (InGameUI)
 		{

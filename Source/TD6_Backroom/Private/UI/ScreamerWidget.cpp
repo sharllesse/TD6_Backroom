@@ -57,3 +57,8 @@ void UScreamerWidget::SetupScreamer(UMediaSoundComponent* SoundComponent)
 	ScreamerMediaPlayer->OpenSource(ScreamerMediaSource);
 	
 }
+
+bool UScreamerWidget::IsPlaying() const
+{
+	return ScreamerMediaPlayer->IsPlaying();
+}

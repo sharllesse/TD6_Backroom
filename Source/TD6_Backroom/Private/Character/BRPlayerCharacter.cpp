@@ -78,7 +78,7 @@ void ABRPlayerCharacter::BeginPlay()
 			Widget->SetupScreamer(ScreamerSound);
 			Widget->OnScreamerEnd.BindLambda([this]
 			{
-				EnableRagdoll();	
+				Server_EnableRagdoll();	
 			});	
 		});
 	
@@ -124,6 +124,12 @@ void ABRPlayerCharacter::GetActorEyesViewPoint(FVector& OutLocation, FRotator& O
 	OutRotation = GetBaseAimRotation();
 }
 
+void ABRPlayerCharacter::Server_EnableRagdoll_Implementation()
+{
+	EnableRagdoll();
+	Tags.AddUnique(Dead);
+}
+
 void ABRPlayerCharacter::TriggerScreamer_Implementation()
 {
 	if (IsLocallyControlled() && ScreamerWidget)
@@ -137,7 +143,7 @@ void ABRPlayerCharacter::TriggerScreamer_Implementation()
 }
 
 void ABRPlayerCharacter::EnableRagdoll_Implementation()
-{
+{	
 	Tags.AddUnique(Dead);
 	
 	if (UCapsuleComponent* CapsuleComp = GetCapsuleComponent())

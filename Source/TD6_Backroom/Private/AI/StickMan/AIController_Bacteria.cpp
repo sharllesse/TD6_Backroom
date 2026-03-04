@@ -144,3 +144,4 @@ EBlackboardNotificationResult AAIController_Bacteria::OnTargetActorChanged(const
 	
 	return EBlackboardNotificationResult::ContinueObserving;
 }
+

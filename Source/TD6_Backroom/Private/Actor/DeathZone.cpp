@@ -31,7 +31,7 @@ void ADeathZone::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 {
 	if (auto Player = Cast<ABRPlayerCharacter>(OtherActor))
 	{
-		Player->EnableRagdoll();
+		Player->Server_EnableRagdoll();
 	}
 }
 
