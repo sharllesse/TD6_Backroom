@@ -46,9 +46,10 @@ UMediaPlayer* UScreamerWidget::GetMediaPlayer() const
 
 void UScreamerWidget::SetupScreamer(UMediaSoundComponent* SoundComponent)
 {
-	if (SoundComponent || ScreamerMediaPlayer || ScreamerMediaTexture || ScreamerMediaSource)
+	if (!SoundComponent || !ScreamerMediaPlayer || !ScreamerMediaTexture || !ScreamerMediaSource)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Error in the setup of the screamer"));
+		return;
 	}
 		
 	SoundComponent->SetMediaPlayer(ScreamerMediaPlayer);
