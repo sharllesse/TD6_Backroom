@@ -26,7 +26,9 @@ class TD6_BACKROOM_API ABRGameGameMode : public AGameModeBase
 	bool bAllPlayerAreDead{false};
 	
 	FEventBusDelegateHandler DelegateHandler;
-
+	
+	UPROPERTY()
+	TMap<AActor*, int32> PlayerStartSpawnCounts;
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;

@@ -185,7 +185,7 @@ void ABRPlayerController::OnPossessPawnLocalLogic(APawn* InPawn)
 		GameCharacter = IsGameCharacter;
 		SwitchMappingContext(NAME_Playing);
 	}
-	else if (auto IsSpectatorCharacter = Cast<ABRSpectatorPawn>(InPawn);IsSpectatorCharacter && StateName == NAME_Spectating)
+	if (auto IsSpectatorCharacter = Cast<ABRSpectatorPawn>(GetSpectatorPawn()))
 	{
 		CustomSpectatorPawn = IsSpectatorCharacter;
 		SwitchMappingContext(NAME_Spectating);
@@ -215,10 +215,11 @@ void ABRPlayerController::OnRep_Pawn()
 void ABRPlayerController::BeginSpectatingState()
 {
 	Super::BeginSpectatingState();
-	if (IsLocalController())
+	if (!IsLocalController())
 	{
-		OnPossessPawnLocalLogic(GetSpectatorPawn());
+		return;
 	}
+	OnPossessPawnLocalLogic(GetSpectatorPawn());
 }
 
 void ABRPlayerController::AcknowledgePossession(class APawn* P)

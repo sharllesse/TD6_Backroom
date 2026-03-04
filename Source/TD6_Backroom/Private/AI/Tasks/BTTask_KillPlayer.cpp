@@ -35,6 +35,7 @@ EBTNodeResult::Type UBTTask_KillPlayer::ExecuteTask(UBehaviorTreeComponent& Owne
 	
 	if (ABRPlayerCharacter* PlayerCharacter{ Cast<ABRPlayerCharacter>(PlayerObject) })
 	{
+		PlayerCharacter->Tags.AddUnique(ABRPlayerCharacter::Dead);
 		BlackboardComponent->ClearValue(TEXT("TargetActor"));
 		BlackboardComponent->ClearValue(TEXT("LostLocation"));
 

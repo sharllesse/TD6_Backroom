@@ -138,18 +138,33 @@ AActor* ABRGameGameMode::ChoosePlayerStart_Implementation(AController* Player)
 AActor* ABRGameGameMode::GetRandomPlayerStart()
 {
 	TArray<AActor*> FoundPlayerStarts;
-    
-	// Retrieve all PlayerStart actors currently existing in the level
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), FoundPlayerStarts);
-
-	if (FoundPlayerStarts.Num() > 0)
+    
+	TArray<AActor*> AvailablePlayerStarts;
+    
+	for (AActor* StartActor : FoundPlayerStarts)
 	{
-		// Select a random index within the bounds of the array
-		int32 RandomIndex = FMath::RandRange(0, FoundPlayerStarts.Num() - 1);
-		return FoundPlayerStarts[RandomIndex];
+		int32* SpawnCountPtr = PlayerStartSpawnCounts.Find(StartActor);
+		int32 CurrentSpawns = SpawnCountPtr ? *SpawnCountPtr : 0;
+
+		if (CurrentSpawns < 2)
+		{
+			AvailablePlayerStarts.Add(StartActor);
+		}
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("No PlayerStart actors found in the level."));
+	if (AvailablePlayerStarts.Num() > 0)
+	{
+		int32 RandomIndex = FMath::RandRange(0, AvailablePlayerStarts.Num() - 1);
+		AActor* ChosenStart = AvailablePlayerStarts[RandomIndex];
+       
+		int32& Count = PlayerStartSpawnCounts.FindOrAdd(ChosenStart);
+		Count++;
+
+		return ChosenStart;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("No available PlayerStart actors found (all might be full)."));
 	return nullptr;
 }
 

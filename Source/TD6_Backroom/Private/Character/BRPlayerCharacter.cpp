@@ -69,6 +69,7 @@ void ABRPlayerCharacter::BeginPlay()
 				Widget->SetupScreamer(ScreamerSound);
 				Widget->OnScreamerEnd.BindLambda([this]
 				{
+					static_cast<APlayerController*>(Controller)->SetInputMode(FInputModeGameOnly());
 					Server_EnableRagdoll();	
 				});	
 			});
