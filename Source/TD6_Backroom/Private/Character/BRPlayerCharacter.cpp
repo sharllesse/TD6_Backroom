@@ -53,6 +53,25 @@ void ABRPlayerCharacter::BeginPlay()
 
 			UGameplayStatics::PlaySound2D(this, PlayerData->NoStaminaSound);
 		});
+
+		
+		ScreamerWidget = Chain::StartChain(GetWorld()->GetFirstLocalPlayerFromController())
+			.Transform([](const ULocalPlayer* LocalPlayer)
+			{
+				return LocalPlayer->GetSubsystem<UUIManagerSubsystem>();
+			})
+			.Transform([](UUIManagerSubsystem* UIManager)
+			{
+				return UIManager->CreateWidget<UScreamerWidget>();
+			})
+			.Execute([this](UScreamerWidget* Widget)
+			{
+				Widget->SetupScreamer(ScreamerSound);
+				Widget->OnScreamerEnd.BindLambda([this]
+				{
+					Server_EnableRagdoll();	
+				});	
+			});
 	}
 
 	GetCharacterMovement()->MaxWalkSpeed = PlayerData->WalkSpeed;
@@ -64,23 +83,6 @@ void ABRPlayerCharacter::BeginPlay()
 
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
-	ScreamerWidget = Chain::StartChain(GetWorld()->GetFirstLocalPlayerFromController())
-		.Transform([](const ULocalPlayer* LocalPlayer)
-		{
-			return LocalPlayer->GetSubsystem<UUIManagerSubsystem>();
-		})
-		.Transform([](UUIManagerSubsystem* UIManager)
-		{
-			return UIManager->CreateWidget<UScreamerWidget>();
-		})
-		.Execute([this](UScreamerWidget* Widget)
-		{
-			Widget->SetupScreamer(ScreamerSound);
-			Widget->OnScreamerEnd.BindLambda([this]
-			{
-				Server_EnableRagdoll();	
-			});	
-		});
 	
 }
 
