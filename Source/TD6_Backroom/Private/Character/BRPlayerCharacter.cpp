@@ -188,6 +188,8 @@ void ABRPlayerCharacter::OnSprint(const FInputActionValue& InputActionValue)
 		return;
 	}
 
+	UE_LOG(LogTemp, Warning, TEXT("Sprinting"))
+
 	const bool bWantSprint = InputActionValue.Get<bool>() && !IsCrouched() && StaminaComponent->CanSprint();
 	Server_OnSprint(bWantSprint);
 	UpdateSprintState(bWantSprint);
