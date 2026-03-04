@@ -33,7 +33,10 @@ public class TD6_Backroom : ModuleRules
 			"VivoxCore",
 			"AIModule",
 			"GameplayTasks",
-			"NavigationSystem"
+			"NavigationSystem",
+			"Media",
+			"MediaAssets",
+			"AudioMixer"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

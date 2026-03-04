@@ -2,14 +2,20 @@
 
 #include "Character/BRPlayerCharacter.h"
 
+#include "Chain.h"
 #include "EventBus.h"
+#include "MediaSoundComponent.h"
 #include "ActorComponent/InteractionComponent.h"
 #include "Character/BRCharacterGameplayTags.h"
 #include "Character/BRPlayerController.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameInstance/BRGameInstance.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AIPerceptionSystem.h"
+#include "Save/OptionSettingsSave.h"
+#include "UI/ScreamerWidget.h"
+#include "UI/UIManagerSubsystem.h"
 
 ABRPlayerCharacter::ABRPlayerCharacter()
 {
@@ -25,6 +31,9 @@ ABRPlayerCharacter::ABRPlayerCharacter()
 	
 	StaminaComponent = CreateDefaultSubobject<UStaminaComponent>(TEXT("Stamina Component"));
 
+	ScreamerSound = CreateDefaultSubobject<UMediaSoundComponent>(TEXT("Screamer Sound Component"));
+	ScreamerSound->SetupAttachment(RootComponent);
+	
 	GenericTeamId = 0;
 }
 
@@ -51,6 +60,25 @@ void ABRPlayerCharacter::BeginPlay()
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+
+	ScreamerWidget = Chain::StartChain(GetWorld()->GetFirstLocalPlayerFromController())
+		.Transform([](const ULocalPlayer* LocalPlayer)
+		{
+			return LocalPlayer->GetSubsystem<UUIManagerSubsystem>();
+		})
+		.Transform([](UUIManagerSubsystem* UIManager)
+		{
+			return UIManager->CreateWidget<UScreamerWidget>();
+		})
+		.Execute([this](UScreamerWidget* Widget)
+		{
+			Widget->SetupScreamer(ScreamerSound);
+			Widget->OnScreamerEnd.BindLambda([this]
+			{
+				EnableRagdoll();	
+			});	
+		});
+	
 }
 
 void ABRPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -91,6 +119,17 @@ void ABRPlayerCharacter::GetActorEyesViewPoint(FVector& OutLocation, FRotator& O
 {
 	OutLocation = CameraComponent->GetComponentLocation();
 	OutRotation = GetBaseAimRotation();
+}
+
+void ABRPlayerCharacter::TriggerScreamer()
+{
+	if (IsLocallyControlled() && ScreamerWidget)
+	{
+		static_cast<APlayerController*>(Controller)->SetInputMode(FInputModeUIOnly());
+		ScreamerWidget->TriggerScreamer();
+		ScreamerSound->SetMediaPlayer(ScreamerWidget->GetMediaPlayer());
+		ScreamerSound->SetVolumeMultiplier(GetGameInstance<UBRGameInstance>()->GetOptionsSettings()->Volume);
+	}
 }
 
 void ABRPlayerCharacter::EnableRagdoll_Implementation()

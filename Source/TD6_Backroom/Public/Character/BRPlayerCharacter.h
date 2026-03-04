@@ -12,6 +12,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "BRPlayerCharacter.generated.h"
 
+class UMediaSoundComponent;
+class UScreamerWidget;
 class UInteractionComponent;
 
 UCLASS()
@@ -57,6 +59,12 @@ protected:
 	TObjectPtr<UBRPlayerData> PlayerData;
 
 	FGenericTeamId GenericTeamId;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UScreamerWidget> ScreamerWidget;
+
+	UPROPERTY()
+	TObjectPtr<UMediaSoundComponent> ScreamerSound;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	TObjectPtr<UStaminaComponent> StaminaComponent;
@@ -98,4 +106,6 @@ protected:
 public:
 	UFUNCTION(NetMulticast, Reliable)
 	void EnableRagdoll();
+
+	void TriggerScreamer();
 };
