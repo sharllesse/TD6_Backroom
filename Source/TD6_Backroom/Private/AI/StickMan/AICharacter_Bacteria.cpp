@@ -47,7 +47,9 @@ void AAICharacter_Bacteria::BeginPlay()
 
 	RandomSoundTimer.Schedule([this]
 	{
-		if (!AIController_Base->GetBlackboardComponent()->GetValueAsObject("TargetActor"))
+		AAIController* AIController = Cast<AAIController>(GetController());
+		
+		if (AIController && !AIController->GetBlackboardComponent()->GetValueAsObject("TargetActor"))
 		{
 			MakeRandomNoise();
 		}
