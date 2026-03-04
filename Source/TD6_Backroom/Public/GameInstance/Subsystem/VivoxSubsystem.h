@@ -33,7 +33,6 @@ protected:
 	IVoiceChatUser* VivoxUser;
 	
 	bool bIsLoggedIn{false};
-	bool bIsInVocalRoom{false};
 	
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
@@ -64,9 +63,11 @@ public:
 	
 	void Set3DPosition(const FVector& Position, const FVector& Forward, const FVector& Up);
 	
+	FString GetActiveMicrophone() const;
 	TArray<FString> GetAllMicrophones() const;
 	void SetMicrophone(const FString& NewDevice) const;
 	
+	FString GetActiveListener() const;
 	TArray<FString> GetAllListeners() const;
 	void SetListener(const FString& NewDevice) const;
 };

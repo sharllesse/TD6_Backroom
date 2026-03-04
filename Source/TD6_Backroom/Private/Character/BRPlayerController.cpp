@@ -17,6 +17,7 @@
 #include "UI/EndScreenWidget.h"
 #include "UI/UIManagerSubsystem.h"
 #include "UI/InGameUI.h"
+#include "UI/SpectatorWidget.h"
 #include "UI/OptionsWidget.h"
 #include "UI/EndScreenWidget.h"
 #include "UI/PauseWidget.h"
@@ -73,9 +74,16 @@ void ABRPlayerController::Tick(float DeltaSeconds)
 			VivoxSubsystem = GetGameInstance()->GetSubsystem<UVivoxSubsystem>();
 		}
 	
-		if (VivoxSubsystem.IsValid() && IsValid(GetPawn()))
+		if (VivoxSubsystem.IsValid())
 		{
-			VivoxSubsystem->Set3DPosition(GetPawn()->GetActorLocation(), GetPawn()->GetActorForwardVector(), GetPawn()->GetActorUpVector());	
+			if (IsValid(GetPawn()))
+			{
+				VivoxSubsystem->Set3DPosition(GetPawn()->GetActorLocation(), GetPawn()->GetActorForwardVector(), GetPawn()->GetActorUpVector());
+			}
+			else if (IsValid(GetSpectatorPawn()))
+			{
+				VivoxSubsystem->Set3DPosition(GetSpectatorPawn()->GetActorLocation(), GetSpectatorPawn()->GetActorForwardVector(), GetSpectatorPawn()->GetActorUpVector());
+			}
 		}
 	}
 }
@@ -178,13 +186,15 @@ void ABRPlayerController::SetupInputComponent()
 
 void ABRPlayerController::OnPossessPawnLocalLogic(APawn* InPawn)
 {
+	UE_LOG(LogTemp, Error, TEXT("OnPossessPawnLocalLogic"));
 	if (auto IsGameCharacter = Cast<ABRPlayerCharacter>(InPawn))
 	{
 		GameCharacter = IsGameCharacter;
 		SwitchMappingContext(NAME_Playing);
 	}
-	else if (auto IsSpectatorCharacter = Cast<ABRSpectatorPawn>(InPawn))
+	else if (auto IsSpectatorCharacter = Cast<ABRSpectatorPawn>(InPawn);IsSpectatorCharacter && StateName == NAME_Spectating)
 	{
+		UE_LOG(LogTemp, Error, TEXT("Switching to Spectator controller"));
 		CustomSpectatorPawn = IsSpectatorCharacter;
 		SwitchMappingContext(NAME_Spectating);
 		if (VivoxSubsystem.IsValid())
@@ -210,10 +220,22 @@ void ABRPlayerController::OnRep_Pawn()
 	OnPossessPawnLocalLogic(GetPawn());
 }
 
+void ABRPlayerController::BeginSpectatingState()
+{
+	Super::BeginSpectatingState();
+	if (IsLocalController())
+	{
+		OnPossessPawnLocalLogic(GetSpectatorPawn());
+	}
+}
+
 void ABRPlayerController::AcknowledgePossession(class APawn* P)
 {
 	Super::AcknowledgePossession(P);
-	OnPossessPawnLocalLogic(P);
+	if (IsLocalPlayerController())
+	{
+		OnPossessPawnLocalLogic( P);
+	}	
 }
 
 
@@ -312,18 +334,20 @@ void ABRPlayerController::OnNextSpectate(const FInputActionValue& InputActionVal
 	
 	if (InputActionValue.Get<bool>())
 	{
-		Chain::Execute(CustomSpectatorPawn.Get(), [](ABRSpectatorPawn* SpecPawn)
-		{
-			SpecPawn->SpectateNextPlayer(ABRSpectatorPawn::IterationMethode::Next);
-		});
+		GoToNextSpectator(ABRSpectatorPawn::IterationMethode::Next);
 	}
 	else
 	{
-		Chain::Execute(CustomSpectatorPawn.Get(), [](ABRSpectatorPawn* SpecPawn)
-		{
-			SpecPawn->SpectateNextPlayer(ABRSpectatorPawn::IterationMethode::Previous);
-		});
+		GoToNextSpectator(ABRSpectatorPawn::IterationMethode::Previous);
 	}
+}
+
+void ABRPlayerController::GoToNextSpectator(ABRSpectatorPawn::IterationMethode)
+{
+	Chain::Execute(CustomSpectatorPawn.Get(), [](ABRSpectatorPawn* SpecPawn)
+		{
+			SpecPawn->SpectateNextPlayer(ABRSpectatorPawn::IterationMethode::Next);
+		});
 }
 
 void ABRPlayerController::OnOpenPauseMenu(const FInputActionValue& InputActionValue)
@@ -347,9 +371,16 @@ void ABRPlayerController::Client_SwitchToSpectator_Implementation()
 	UE_LOG(LogTemp, Error, TEXT("Switching to Spectator client"))
 	GameCharacter = nullptr;
 	ChangeState(NAME_Spectating);
-
-	if (HasAuthority())
-		OnRep_Pawn();
+	
+	if (IsLocalController())
+	{
+		SpectatorWidget = GetLocalPlayer()->GetSubsystem<UUIManagerSubsystem>()->CreateWidget<USpectatorWidget>();
+	
+		if (InGameUI)
+		{
+			InGameUI->ShowStaminaBar(false);
+		}
+	}
 }
 
 void ABRPlayerController::Server_SwitchToSpectator_Implementation()
@@ -374,9 +405,10 @@ void ABRPlayerController::Server_SwitchToSpectator_Implementation()
 		GamePlayerState->SetToSpectator();
 	}
 
-	ClientGotoState(NAME_Spectating);
 	ChangeState(NAME_Spectating);
-	
+	ClientGotoState(NAME_Spectating);
+		
+
 	Client_SwitchToSpectator();
 }
 

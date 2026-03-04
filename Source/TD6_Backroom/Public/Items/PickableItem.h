@@ -25,9 +25,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTag Type;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	UMaterialInterface* HighlightMaterial;
-
 public:
 	virtual void Tick(float DeltaTime) override;
 

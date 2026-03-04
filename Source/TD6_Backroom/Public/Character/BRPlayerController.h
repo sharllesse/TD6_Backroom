@@ -11,6 +11,7 @@
 #include "Utils/FEventBusDelegateHandler.h"
 #include "BRPlayerController.generated.h"
 
+class USpectatorWidget;
 class UOptionSettingsSave;
 class UVivoxSubsystem;
 class UInGameUI;
@@ -59,6 +60,9 @@ protected:
 	UPROPERTY(Transient)
 	TObjectPtr<UInGameUI> InGameUI;
 	
+	UPROPERTY(Transient)
+	TObjectPtr<USpectatorWidget> SpectatorWidget;
+	
 	TWeakObjectPtr<UVivoxSubsystem> VivoxSubsystem;
 	TWeakObjectPtr<UOptionSettingsSave> SaveSettings;
 
@@ -79,7 +83,8 @@ protected:
 	void OnPossessPawnLocalLogic(APawn* InPawn);
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnRep_Pawn() override;
-
+	virtual void BeginSpectatingState() override;
+	
 	virtual void AcknowledgePossession(class APawn* P) override;
 	
 	void SwitchMappingContext(const FName& Name);
@@ -104,6 +109,8 @@ protected:
 
 	UFUNCTION()
 	void OnNextSpectate(const FInputActionValue& InputActionValue);
+
+	void GoToNextSpectator(ABRSpectatorPawn::IterationMethode);
 	
 	UFUNCTION()
 	void OnOpenPauseMenu(const FInputActionValue& InputActionValue);

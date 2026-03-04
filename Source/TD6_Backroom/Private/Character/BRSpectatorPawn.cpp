@@ -4,6 +4,8 @@
 #include "Character/BRSpectatorPawn.h"
 
 #include "Chain.h"
+#include "EventBus.h"
+#include "Character/BRCharacterGameplayTags.h"
 #include "GameFramework/PlayerState.h"
 #include "GameState/BRGameGameState.h"
 
@@ -34,6 +36,7 @@ void ABRSpectatorPawn::BeginPlay()
 void ABRSpectatorPawn::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
+    UE_LOG(LogTemp, Error, TEXT("ABRSpectatorPawn::PossessedBy"))
     SpectateNextPlayer(IterationMethode::Init);
 }
 
@@ -70,7 +73,7 @@ void ABRSpectatorPawn::SpectateNextPlayer(IterationMethode InIterationMethode)
 
     Chain::Execute(GetWorld()->GetGameState<ABRGameGameState>(), [this, InIterationMethode](ABRGameGameState* GameState)
     {
-        const int32 TotalPlayers = GameState->PlayerArray.Num();
+        const int32 TotalPlayers = GameState->PlayerArray.Num(); 
         if (TotalPlayers <= 0)
         {
             return;
@@ -84,6 +87,7 @@ void ABRSpectatorPawn::SpectateNextPlayer(IterationMethode InIterationMethode)
             return;
         }
 
+        
         if (InIterationMethode == IterationMethode::Init)
         {
             for (auto TargetPlayerState : GameState->PlayerArray)
@@ -97,8 +101,11 @@ void ABRSpectatorPawn::SpectateNextPlayer(IterationMethode InIterationMethode)
                         if (TargetPawn)
                         {
                             PC->SetViewTargetWithBlend(TargetPawn, 0.2f, EViewTargetBlendFunction::VTBlend_Cubic);
-                        }
+                        } 
                         CurrentPlayerSpectateIndex = CurrentIndex;
+                        UE_LOG(LogTemp, Error, TEXT("Broadcast"));
+                        UEventBus::Broadcast<const APlayerState*>(this, Character_Callback_OnPlayerSwitchSpectate, TargetPlayerState);
+                        
                         break;
                     }
                 }
@@ -122,7 +129,9 @@ void ABRSpectatorPawn::SpectateNextPlayer(IterationMethode InIterationMethode)
                 if (TargetPawn && TargetPawn != this)
                 {
                     ValidPawnToSpectate = TargetPawn;
-                    CurrentPlayerSpectateIndex = CurrentIndex;
+                    CurrentPlayerSpectateIndex = CurrentIndex; 
+                    UE_LOG(LogTemp, Error, TEXT("Broadcast"));
+                    UEventBus::Broadcast<const APlayerState*>(this, Character_Callback_OnPlayerSwitchSpectate, TargetPlayerState);
                     break;
                 }
             }
@@ -134,5 +143,6 @@ void ABRSpectatorPawn::SpectateNextPlayer(IterationMethode InIterationMethode)
             CurrentPlayerSpectateIndex = CurrentIndex;
             PC->SetViewTargetWithBlend(this);
         }
+        return;
     });
 }

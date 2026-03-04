@@ -38,13 +38,13 @@ void APickableItem::Tick(float DeltaTime)
 void APickableItem::OnBeginFocus()
 {
 	IInteractable::OnBeginFocus();
-	MeshComponent->SetOverlayMaterial(HighlightMaterial);
+	MeshComponent->SetRenderCustomDepth(true);
 }
 
 void APickableItem::OnEndFocus()
 {
 	IInteractable::OnEndFocus();
-	MeshComponent->SetOverlayMaterial(nullptr);
+	MeshComponent->SetRenderCustomDepth(false);
 }
 
 void APickableItem::OnInteract(AActor* InInstigator)

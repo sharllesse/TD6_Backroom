@@ -48,3 +48,8 @@ void UInGameUI::SetStaminaBar(float Current, float Max)
 {
 	StaminaBar->SetPercent(Current / Max);
 }
+
+void UInGameUI::ShowStaminaBar(bool bShow)
+{
+	StaminaBar->SetVisibility(bShow ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
+}

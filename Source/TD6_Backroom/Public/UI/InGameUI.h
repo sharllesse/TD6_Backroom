@@ -36,4 +36,6 @@ public:
 	void SetCanInteract(bool bCanInteract, const FText& InteractionText) const;
 
 	void SetStaminaBar(float Current, float Max);
+	
+	void ShowStaminaBar(bool bShow);
 };

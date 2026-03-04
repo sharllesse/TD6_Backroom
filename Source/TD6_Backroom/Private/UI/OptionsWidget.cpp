@@ -67,27 +67,18 @@ void UOptionsWidget::NativeConstruct()
 	
 	Chain::Execute(GetGameInstance()->GetSubsystem<UVivoxSubsystem>(), [this](UVivoxSubsystem* Subsystem)
 	{
-		bool bIsFirst{true};
 		for (auto Element : Subsystem->GetAllMicrophones())
 		{
-			if (bIsFirst)
-			{
-				bIsFirst = false;
-				SetMicrophone(Element);
-			}
 			MicrophoneDropDown->AddOption(Element);
 		}
 		
-		bIsFirst = {true};
 		for (auto Element : Subsystem->GetAllListeners())
 		{
-			if (bIsFirst)
-			{
-				bIsFirst = false;
-				SetListener(Element);
-			}
 			ListenerDropDown->AddOption(Element);
 		}
+		
+		MicrophoneDropDown->SetSelectedOption(Subsystem->GetActiveMicrophone());
+		ListenerDropDown->SetSelectedOption(Subsystem->GetActiveListener());
 	});
 	
 	MicrophoneDropDown->OnSelectionChanged.AddDynamic(this, &ThisClass::OnMicrophoneChange);
