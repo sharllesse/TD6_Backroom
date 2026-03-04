@@ -9,10 +9,12 @@
 #include "Actor/ActorGameplayTags.h"
 #include "Algo/AllOf.h"
 #include "Algo/Count.h"
+#include "GameFramework/PlayerStart.h"
 #include "GameFramework/PlayerState.h"
 #include "GameMode/BRGameModeGameplayTags.h"
 #include "GameState/BRGameGameState.h"
 #include "Items/BRItemGameplayTag.h"
+#include "Kismet/GameplayStatics.h"
 #include "PlayerState/BRPlayerStateGameTags.h"
 
 void ABRGameGameMode::BeginPlay()
@@ -119,6 +121,36 @@ void ABRGameGameMode::CheckIfAllPlayerAreDead()
 			Game->MulticastNotifyAllPlayerAreDead();
 		}
 	});
+}
+
+AActor* ABRGameGameMode::ChoosePlayerStart_Implementation(AController* Player)
+{
+	AActor* RandomStart = GetRandomPlayerStart();
+    
+	if (RandomStart)
+	{
+		return RandomStart;
+	}
+	
+	return Super::ChoosePlayerStart_Implementation(Player);
+}
+
+AActor* ABRGameGameMode::GetRandomPlayerStart()
+{
+	TArray<AActor*> FoundPlayerStarts;
+    
+	// Retrieve all PlayerStart actors currently existing in the level
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), FoundPlayerStarts);
+
+	if (FoundPlayerStarts.Num() > 0)
+	{
+		// Select a random index within the bounds of the array
+		int32 RandomIndex = FMath::RandRange(0, FoundPlayerStarts.Num() - 1);
+		return FoundPlayerStarts[RandomIndex];
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("No PlayerStart actors found in the level."));
+	return nullptr;
 }
 
 int ABRGameGameMode::GetVhsObjective() const

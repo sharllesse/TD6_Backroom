@@ -26,6 +26,7 @@ void ABRLobbyPlayerState::BeginPlay()
 	UEventBus::LockSignature<ABRLobbyPlayerState*, bool>(this, PlayerState_Callback_LobbyReadyChange);
 	UEventBus::LockSignature<ABRLobbyPlayerState*>(this, PlayerState_Callback_LeaveLobby);
 	UEventBus::Broadcast(this, PlayerState_Callback_LobbyReadyChange, this , bIsReady);
+	UEventBus::Broadcast(this, PlayerState_Callback_OnPlayerJoin, this);
 }
 
 void ABRLobbyPlayerState::EndPlay(const EEndPlayReason::Type EndPlayReason)

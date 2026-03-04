@@ -167,6 +167,19 @@ void ULobbyInfoWidget::NativeConstruct()
 	{
 		RemovePlayerInfo(PlayerState);
 	});
+
+	AddEventBusDelegate(PlayerState_Callback_OnPlayerJoin, [this](ABRLobbyPlayerState* PlayerState)
+	{
+		UpdatePlayerCount();
+		if (!PlayerInfoMap.Contains(PlayerState))
+		{
+			CreateNewPlayerInfo(PlayerState);
+		}
+		else
+		{
+			UpdatePlayerInfo(PlayerState);
+		}
+	});
 	
 	SetReady->OnClicked.AddDynamic(this, &ThisClass::OnSetReadyClicked);
 	LeaveLobby->OnClicked.AddDynamic(this, &ThisClass::OnLeaveLobbyClicked);

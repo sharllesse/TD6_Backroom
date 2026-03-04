@@ -34,6 +34,9 @@ class TD6_BACKROOM_API ABRGameGameMode : public AGameModeBase
 	void CheckIfHasAllVhs();
 	void CheckIfAllPlayerAreInExitZone();
 	void CheckIfAllPlayerAreDead();
+
+	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
+	AActor* GetRandomPlayerStart();
 public:
 
 	int GetVhsObjective() const;
